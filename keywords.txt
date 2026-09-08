@@ -1,0 +1,137 @@
+# lightweight-shell (lish) Library Keywords
+# https://www.arduino.cc/en/Reference/APIStyleGuide
+
+# Classes, structs, and enum types (KEYWORD1)
+Shell	KEYWORD1
+IShell	KEYWORD1
+Args	KEYWORD1
+CmdDescriptor	KEYWORD1
+CmdPermission	KEYWORD1
+LineBuffer	KEYWORD1
+LineEditor	KEYWORD1
+History	KEYWORD1
+InputProcessor	KEYWORD1
+ShellStatus	KEYWORD1
+CommandResult	KEYWORD1
+
+# Shell / IShell methods (KEYWORD2)
+# write() and read() are also real public IShell methods, deliberately omitted:
+# they're common enough English words that highlighting every occurrence in a
+# user's own sketch code isn't worth it.
+set_mode	KEYWORD2
+mode	KEYWORD2
+service	KEYWORD2
+run_line	KEYWORD2
+get_last_result_code	KEYWORD2
+print_prompt	KEYWORD2
+
+# CmdDescriptor methods (KEYWORD2)
+# name() and help() are also real public methods, deliberately omitted for the
+# same reason as write()/read() above.
+make	KEYWORD2
+permissions	KEYWORD2
+execute	KEYWORD2
+hidden	KEYWORD2
+available	KEYWORD2
+matches_hash	KEYWORD2
+matches_name	KEYWORD2
+
+# Args methods (KEYWORD2)
+parse	KEYWORD2
+command	KEYWORD2
+count	KEYWORD2
+
+# History methods (KEYWORD2)
+push	KEYWORD2
+prev	KEYWORD2
+next	KEYWORD2
+cancel_browsing	KEYWORD2
+is_browsing	KEYWORD2
+current	KEYWORD2
+
+# LineEditor methods (KEYWORD2)
+insert	KEYWORD2
+backspace	KEYWORD2
+delete_at_cursor	KEYWORD2
+move_left	KEYWORD2
+move_right	KEYWORD2
+move_home	KEYWORD2
+move_end	KEYWORD2
+cursor_pos	KEYWORD2
+
+# LineBuffer methods (KEYWORD2)
+is_blank	KEYWORD2
+clear	KEYWORD2
+copy_from	KEYWORD2
+
+# InputProcessor methods (KEYWORD2)
+process_char	KEYWORD2
+
+# CommandResult methods (KEYWORD2)
+succeeded	KEYWORD2
+
+# Tab completion functions (KEYWORD2)
+prefix_match	KEYWORD2
+extract_command_segment	KEYWORD2
+complete_command_in_buffer	KEYWORD2
+tab_complete	KEYWORD2
+
+# Platform / helper functions (KEYWORD2)
+hash_cmd	KEYWORD2
+to_lower	KEYWORD2
+read_flash	KEYWORD2
+read_flash_char	KEYWORD2
+string_matches	KEYWORD2
+write_string	KEYWORD2
+write_flash_string	KEYWORD2
+flash_string_length	KEYWORD2
+is_available	KEYWORD2
+is_hidden	KEYWORD2
+
+# CmdPermission constants (LITERAL1)
+None	LITERAL1
+Mode0	LITERAL1
+Mode1	LITERAL1
+Mode2	LITERAL1
+Mode3	LITERAL1
+Mode4	LITERAL1
+Mode5	LITERAL1
+Mode6	LITERAL1
+AllModes	LITERAL1
+HideWhenUnavailable	LITERAL1
+
+# ShellStatus constants (LITERAL1)
+Ok	LITERAL1
+CommandNotFound	LITERAL1
+PermissionDenied	LITERAL1
+EmptyCommand	LITERAL1
+
+# Args::Terminator constants (LITERAL1)
+Semicolon	LITERAL1
+LogicalAnd	LITERAL1
+EndOfLine	LITERAL1
+ParseError	LITERAL1
+
+# Flash string constants (LITERAL1)
+ANSI_DIM	LITERAL1
+ANSI_RESET	LITERAL1
+ANSI_CLEAR_LINE	LITERAL1
+ANSI_CLEAR_TO_EOL	LITERAL1
+ANSI_CURSOR_LEFT	LITERAL1
+ANSI_CURSOR_LEFT_SUFFIX	LITERAL1
+NEWLINE	LITERAL1
+PROMPT_DEFAULT	LITERAL1
+STATUS_OK	LITERAL1
+STATUS_ERROR_PREFIX	LITERAL1
+STATUS_ERROR_SUFFIX	LITERAL1
+ERROR_COMMAND_NOT_FOUND	LITERAL1
+ERROR_PERMISSION_DENIED	LITERAL1
+ERROR_CODE_PREFIX	LITERAL1
+INVALID_ARGUMENTS	LITERAL1
+ERROR_INVALID_ARGUMENT_FORMAT	LITERAL1
+HELP_COMMAND_STR	LITERAL1
+HELP_COMMAND_HELP	LITERAL1
+
+# Platform macros (LITERAL1)
+LISH_PROGMEM	LITERAL1
+LISH_FLASH_STORAGE	LITERAL1
