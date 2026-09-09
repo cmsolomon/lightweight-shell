@@ -163,9 +163,8 @@ pattern `examples/BasicShell` actually uses.
 
 ## Contributing
 
-Building and running the test suite is covered separately from this
-end-user documentation - see [`docs/archive/SETUP.md`](docs/archive/SETUP.md)
-(kept for reference; some details may be out of date pending a refresh).
+Building lish itself and running its BDD test suite is covered separately
+from this end-user documentation - see [`docs/SETUP.md`](docs/SETUP.md).
 
 ## License
 
