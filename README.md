@@ -151,6 +151,31 @@ This version skips Flash/PROGMEM placement to stay minimal - see the
 [Getting Started guide](docs/GETTING_STARTED.md) for the Flash-optimized
 pattern `examples/BasicShell` actually uses.
 
+## Terminal Requirements
+
+The Arduino IDE's built-in Serial Monitor is not a good way to use lish -
+use a dedicated terminal program instead. lish's interactive features -
+line editing, cursor movement, arrow-key history, dimmed help listings -
+all work by sending real VT100/ANSI escape sequences over the wire (see
+[Features](#features) above). The built-in Serial Monitor is just a raw
+text pane, not a terminal emulator, so it doesn't interpret any of this -
+escape sequences show up as literal garbage characters instead of doing
+anything.
+
+Use a real terminal program instead:
+
+- **[PuTTY](https://www.putty.org/)** (serial connection type) - the usual
+  recommendation on Windows, but packaged for Linux too (e.g.
+  `apt install putty`) and available on macOS via Homebrew - a solid choice
+  on any platform
+- **Linux/macOS**: `screen /dev/ttyUSB0 9600`, `picocom -b 9600 /dev/ttyUSB0`,
+  or `minicom` - usually already installed, or a one-line package install,
+  if you'd rather not add PuTTY
+- **Windows**: Tera Term is a common PuTTY alternative
+- **Any platform**: a serial-terminal editor extension (e.g. VS Code's
+  "Serial Monitor" extension) works too, as long as it does real terminal
+  emulation rather than just displaying raw bytes
+
 ## Documentation
 
 - **[Getting Started](docs/GETTING_STARTED.md)** - writing an I/O adapter,

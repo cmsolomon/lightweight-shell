@@ -228,5 +228,9 @@ login prompt), but `service()` never blocks waiting for the *next* line.
 - Read through [`examples/BasicShell`](../examples/BasicShell) end to end -
   it demonstrates everything above plus multi-mode permissions, a login
   flow, and a `sudo`-style reentrant command.
+- When you connect to try it out, use a real terminal program, not the
+  Arduino IDE's built-in Serial Monitor - see
+  [Terminal Requirements](../README.md#terminal-requirements) in the
+  README for why and what to use instead.
 - See the [Architecture](ARCHITECTURE.md) primer if you're contributing to
   lish itself, not just using it.
