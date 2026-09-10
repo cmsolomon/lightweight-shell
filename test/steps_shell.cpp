@@ -277,8 +277,8 @@ GIVEN(given_custom_prompt_used, "a custom prompt callback is used") {
 }
 
 // Parses the exit code back out of real Shell::print_status() output, e.g.
-// "005" or "-005" following "Code " in "[ERROR: Code 005]". Returns 0 if no
-// such fragment is present (i.e. status wasn't Ok-with-nonzero-code).
+// "5" or "-5" following "Code " in "[ERROR: Code 5]". Returns 0 if no such
+// fragment is present (i.e. status wasn't Ok-with-nonzero-code).
 static int extract_code_from_output(const std::string& output) {
     static const std::string marker = "Code ";
     size_t pos = output.find(marker);
@@ -604,4 +604,27 @@ THEN(then_output_not_contains, "the output should not contain {string}") {
         std::cerr << "Did not expect '" << unexpected << "' in output: '" << ctx.last_output << "'" << std::endl;
         cuke::equal(false, true);  // Fail
     }
+}
+
+/// Verifies the machine-parseable ACK/NAK framing byte documented on
+/// STATUS_OK/STATUS_ERROR_PREFIX in lishDefs.h: the byte immediately
+/// preceding a status message (e.g. "[OK]", "[ERROR: ...]") must be exactly
+/// ACK (0x06) or NAK (0x15) - not just present somewhere in the output.
+static void expect_control_byte_before(const std::string& output, const std::string& expected, const unsigned char control_byte) {
+    size_t pos = output.find(expected);
+    cuke::equal(pos != std::string::npos, true);
+    cuke::equal(pos > 0, true);
+    if (pos != std::string::npos && pos > 0) {
+        cuke::equal(static_cast<unsigned char>(output[pos - 1]), control_byte);
+    }
+}
+
+THEN(then_output_ack_prefixed, "the output should be ACK-prefixed before {string}") {
+    auto& ctx = cuke::context<ShellContext>();
+    expect_control_byte_before(ctx.last_output, CUKE_ARG(1), 0x06);
+}
+
+THEN(then_output_nak_prefixed, "the output should be NAK-prefixed before {string}") {
+    auto& ctx = cuke::context<ShellContext>();
+    expect_control_byte_before(ctx.last_output, CUKE_ARG(1), 0x15);
 }

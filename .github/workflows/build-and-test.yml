@@ -1,0 +1,80 @@
+name: Build and Test
+
+# Reusable workflow (workflow_call) shared by ci.yml (every push/PR) and
+# release.yml (tagged releases), so the two never drift apart on what
+# "passing" actually means - lint, host tests + coverage, and every
+# supported board's example compile, in one place.
+
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    # arduino-lint checks library.properties/structure against the exact
+    # rules Arduino's Library Manager registry enforces - standalone binary,
+    # doesn't need the full install-prerequisites.sh (host test toolchain,
+    # board cores, etc.) just to run.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install arduino-lint
+        run: curl -fsSL https://raw.githubusercontent.com/arduino/arduino-lint/main/etc/install.sh | BINDIR="$HOME/.local/bin" sh
+
+      - name: Lint
+        run: "$HOME/.local/bin/arduino-lint --compliance strict --library-manager submit"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: ./install-prerequisites.sh
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build -j "$(nproc)"
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Package test report and coverage
+        run: |
+          cd build
+          zip -r ../test-report-and-coverage.zip test_report.html coverage
+
+      - name: Upload test report and coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-and-coverage
+          path: test-report-and-coverage.zip
+          # Every push/PR run gets its own copy here so reviewers can pull
+          # down a recent run's report without rebuilding - short retention
+          # is fine since this is a debugging convenience, not a permanent
+          # record. release.yml separately attaches this same zip as a
+          # *release asset*, which is NOT subject to this retention at all
+          # (GitHub doesn't expire release assets - see docs/RELEASING.md).
+          retention-days: 14
+
+  arduino-examples:
+    # Compiles examples/BasicShell for every board preset CMakeLists.txt
+    # currently supports - a regression here (e.g. a board-specific macro
+    # issue) wouldn't be caught by the test job above at all.
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        preset: [uno, uno_r4, uno_r4_minima, mega]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: ./install-prerequisites.sh
+
+      - name: Configure
+        run: cmake -S . -B build -DARDUINO_BOARD_PRESET=${{ matrix.preset }}
+
+      - name: Build Arduino example
+        run: cmake --build build --target arduino_build

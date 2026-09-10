@@ -1,0 +1,46 @@
+name: Release
+
+# Fires only on a pushed tag matching the bare version in library.properties
+# (e.g. "0.2.0", no "v" prefix - Arduino's Library Manager matches the git
+# tag against library.properties' version= field literally). See
+# docs/RELEASING.md for the full release checklist.
+#
+# Shares its actual lint/test/board-matrix logic with ci.yml via
+# build-and-test.yml, so a release can never pass something a normal PR
+# would have failed.
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+
+  create-release:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # This is build-and-test.yml's `test` job's upload - a same-run
+      # artifact download works across a workflow_call boundary. Its
+      # retention-days only bounds this temporary copy; once attached
+      # below as a release asset, it's permanent (GitHub doesn't expire
+      # release assets) - see docs/RELEASING.md.
+      - name: Download test report and coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: test-report-and-coverage
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "lish ${{ github.ref_name }}" \
+            --generate-notes \
+            test-report-and-coverage.zip

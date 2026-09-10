@@ -1,0 +1,15 @@
+name: CI
+
+# Runs on every push and PR: lint, build + test (+ coverage), and confirm
+# examples/BasicShell still compiles for every supported board. See
+# build-and-test.yml (shared with release.yml, so the two can't drift on
+# what "passing" means) for what actually runs.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml

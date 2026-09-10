@@ -17,9 +17,11 @@
 // Template implementations for Shell class - included by lishShell.h
 // DO NOT COMPILE THIS FILE DIRECTLY
 
+#include <stdio.h>
+
 namespace lish {
 
-template <
+template<
   typename IOAdapter,
   typename LineBufferType,
   typename LineEditorType,
@@ -27,8 +29,7 @@ template <
   typename ContextType,
   typename PromptCallbackType,
   size_t NumCommands,
-  uint8_t MaxLineLength
->
+  uint8_t MaxLineLength >
 CommandResult Shell<IOAdapter, LineBufferType, LineEditorType, HistoryType, ContextType, PromptCallbackType, NumCommands, MaxLineLength>::dispatch_chain(char* const buf, const uint8_t length) {
   Args view(buf, length);
   uint8_t offset = 0;
@@ -50,13 +51,12 @@ CommandResult Shell<IOAdapter, LineBufferType, LineEditorType, HistoryType, Cont
       result = invoke_slice(view);
     }
 
-  } while (terminator != Args::Terminator::EndOfLine &&
-           (terminator == Args::Terminator::Semicolon || result.succeeded()));
+  } while (terminator != Args::Terminator::EndOfLine && (terminator == Args::Terminator::Semicolon || result.succeeded()));
 
   return result;
 }
 
-template <
+template<
   typename IOAdapter,
   typename LineBufferType,
   typename LineEditorType,
@@ -64,8 +64,7 @@ template <
   typename ContextType,
   typename PromptCallbackType,
   size_t NumCommands,
-  uint8_t MaxLineLength
->
+  uint8_t MaxLineLength >
 CommandResult Shell<IOAdapter, LineBufferType, LineEditorType, HistoryType, ContextType, PromptCallbackType, NumCommands, MaxLineLength>::invoke_slice(Args& view) {
   const char* cmd = view.command();
 
@@ -102,7 +101,7 @@ CommandResult Shell<IOAdapter, LineBufferType, LineEditorType, HistoryType, Cont
   return CommandResult(ShellStatus::CommandNotFound, 0);
 }
 
-template <
+template<
   typename IOAdapter,
   typename LineBufferType,
   typename LineEditorType,
@@ -110,8 +109,7 @@ template <
   typename ContextType,
   typename PromptCallbackType,
   size_t NumCommands,
-  uint8_t MaxLineLength
->
+  uint8_t MaxLineLength >
 void Shell<IOAdapter, LineBufferType, LineEditorType, HistoryType, ContextType, PromptCallbackType, NumCommands, MaxLineLength>::print_status(const CommandResult result) {
   write_flash_string(NEWLINE, io_);
 
@@ -120,17 +118,9 @@ void Shell<IOAdapter, LineBufferType, LineEditorType, HistoryType, ContextType, 
   } else if (result.status == ShellStatus::Ok && result.code != 0) {
     write_flash_string(STATUS_ERROR_PREFIX, io_);
     write_flash_string(ERROR_CODE_PREFIX, io_);
-    if (result.code < 0) {
-      io_.write('-');
-      int8_t abs_code = -result.code;
-      io_.write('0' + (abs_code / 100) % 10);
-      io_.write('0' + (abs_code / 10) % 10);
-      io_.write('0' + (abs_code % 10));
-    } else {
-      io_.write('0' + (result.code / 100) % 10);
-      io_.write('0' + (result.code / 10) % 10);
-      io_.write('0' + (result.code % 10));
-    }
+    char code_buf[5];  // "-128".."127" + null; int8_t's widest case is 4 chars
+    snprintf(code_buf, sizeof(code_buf), "%d", static_cast<int>(result.code));
+    write_string(code_buf, io_);
     write_flash_string(STATUS_ERROR_SUFFIX, io_);
   } else {
     // The only two statuses that can reach here: dispatch_chain() (this function's only
@@ -148,7 +138,7 @@ void Shell<IOAdapter, LineBufferType, LineEditorType, HistoryType, ContextType, 
   write_flash_string(NEWLINE, io_);
 }
 
-template <
+template<
   typename IOAdapter,
   typename LineBufferType,
   typename LineEditorType,
@@ -156,10 +146,9 @@ template <
   typename ContextType,
   typename PromptCallbackType,
   size_t NumCommands,
-  uint8_t MaxLineLength
->
+  uint8_t MaxLineLength >
 void Shell<IOAdapter, LineBufferType, LineEditorType, HistoryType, ContextType, PromptCallbackType, NumCommands, MaxLineLength>::on_submit() {
-  write_flash_string(NEWLINE,io_);
+  write_flash_string(NEWLINE, io_);
 
   if (!line_buf_.is_blank()) {
     CommandResult result = dispatch_chain(line_buf_.buffer, line_buf_.line_len);

@@ -78,14 +78,32 @@ LISH_FLASH_STORAGE char PROMPT_DEFAULT[] LISH_PROGMEM = "> ";
 // ============================================================================
 // Status & Error Message Constants
 // ============================================================================
+/// Every status line begins with a single ASCII control byte before its
+/// human-readable text - ACK (0x06, STATUS_OK) for a fully successful result,
+/// NAK (0x15, STATUS_ERROR_PREFIX) for any failure - so an automated caller
+/// (e.g. a test harness or production tooling driving this shell over a
+/// serial link) can classify a result by inspecting one fixed-position byte,
+/// without string-matching the human-readable bracketed text that follows
+/// it. Both are standard ASCII control codes conventionally used for exactly
+/// this purpose (e.g. XMODEM, Modbus ASCII), not project-specific.
+///
+/// Position: Shell::print_status() always writes NEWLINE immediately before
+/// writing either of these, so the byte sequence on the wire is always
+/// `\r\n<ACK-or-NAK><rest of message>\r\n` - the control byte is always the
+/// first character after the blank line, regardless of which message
+/// follows it.
+///
 /// Printed as-is after a successful command (code 0). See Shell::print_status().
-LISH_FLASH_STORAGE char STATUS_OK[] LISH_PROGMEM = "[OK]";
+LISH_FLASH_STORAGE char STATUS_OK[] LISH_PROGMEM = "\x06[OK]";
 
 /// Bracket fragments wrapping an error message or code, e.g. "[ERROR: <text>]"
 /// or "[ERROR: Code <NNN>]". Combined with one of the ERROR_* strings below (or
 /// with ERROR_CODE_PREFIX + digits) in Shell::print_status(); neither fragment
-/// is a complete message on its own.
-LISH_FLASH_STORAGE char STATUS_ERROR_PREFIX[] LISH_PROGMEM = "[ERROR: ";
+/// is a complete message on its own. Covers every failure path
+/// Shell::print_status() can print: a command's own nonzero return code, a
+/// not-found command, and a permission-denied command all share this one
+/// NAK-prefixed opening fragment.
+LISH_FLASH_STORAGE char STATUS_ERROR_PREFIX[] LISH_PROGMEM = "\x15[ERROR: ";
 LISH_FLASH_STORAGE char STATUS_ERROR_SUFFIX[] LISH_PROGMEM = "]";
 
 /// Shell-level dispatch errors (ShellStatus), printed between STATUS_ERROR_PREFIX

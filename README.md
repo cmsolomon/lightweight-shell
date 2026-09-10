@@ -3,10 +3,11 @@
 </p>
 
 <p align="center">
-  <strong>A zero-heap, no-vtable interactive command shell for Arduino and embedded C++.</strong>
+  <strong>A zero-heap interactive command shell for Arduino and embedded C++.</strong>
 </p>
 
 <p align="center">
+  <a href="https://github.com/cmsolomon/lightweight-shell/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/cmsolomon/lightweight-shell/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
   <!-- TODO: GitHub Sponsors badge - pending sponsor account setup -->
 </p>
@@ -90,7 +91,7 @@ toolchain this repo's own build uses:
 | Empty sketch (baseline) | 444 B | 9 B |
 | Serial only, no lish | 1,468 B | 184 B |
 | lish wired to Serial, zero commands registered | 9,590 B | 342 B |
-| `examples/BasicShell` (8 commands, login + permission modes) | 12,856 B | 415 B |
+| `examples/BasicShell` (8 commands, login + permission modes) | 12,826 B | 419 B |
 
 "lish wired to Serial, zero commands" is the smallest a real, working shell
 built with this library can be. Serial alone (no lish at all) accounts for
@@ -103,8 +104,48 @@ which understates the real cost rather than isolating it honestly.
 
 Your own commands and `AppContext` add on top from there: the 8 commands in
 `examples/BasicShell` (echo, uptime, mode, login, logout, whoami, sudo, plus
-the built-in help) added roughly 3.3 KB over the zero-command baseline above
+the built-in help) added roughly 3 KB over the zero-command baseline above
 - actual cost per command varies with what it does.
+
+### How much of that is lish itself
+
+The diffing approach above answers "how big is a working shell," but not
+"how many of those bytes are the library's own code" - for that, the
+linker's own final symbol table is the only reliable source (an
+`arduino_build`'s `-Wl,-Map=...` map file looks like the obvious place to
+look, but AVR's build uses link-time optimization, which collapses every
+input object into one LTO module before the final link - the map file's
+per-object-file breakdown shows every `lish*.cpp.o` at size `0x0`
+"(symbol from plugin)", not the real number). What *does* work: asking the
+linker's own tool directly, on the real, final binary, for every symbol
+whose name is qualified `lish::` - `avr-nm`/`arm-none-eabi-nm
+--print-size --demangle`, filtered to that namespace and summed by
+section:
+
+| Board | Toolchain | `lish::`-attributed flash | `lish::`-attributed RAM | Out of (total) |
+|---|---|---:|---:|---|
+| Uno (AVR) | `avr-gcc` | 7,968 B | 24 B | 12,826 B / 419 B |
+| Uno R4 (ARM) | `arm-none-eabi-gcc` | 5,900 B | 48 B | 59,172 B / 6,900 B |
+
+The 24-48 bytes of RAM is entirely `IShell`'s vtable - the one virtual
+interface in the library (see [Features](#features)); everything else is
+flash. The remaining flash on each board - roughly 4.9 KB on Uno, ~53 KB
+on Uno R4 - is Arduino core startup/runtime, the `Serial`/UART driver, and
+`examples/BasicShell`'s own 8 command handlers plus `AppContext`, not lish
+itself; the much larger absolute total on Uno R4 is mostly the Renesas
+core's own runtime overhead (a full Cortex-M4 startup/USB/clock stack),
+not anything to do with lish's relative size.
+
+`examples/BasicShell` compiles cleanly on every board preset this repo
+supports (verified via `cmake --build build --target arduino_build` for
+each - see [`docs/SETUP.md`](docs/SETUP.md#arduino-build)):
+
+| Board | Flash | RAM |
+|---|---:|---:|
+| Uno | 12,826 B | 419 B |
+| Mega 2560 | 13,244 B | 419 B |
+| Uno R4 WiFi | 59,172 B | 6,900 B |
+| Uno R4 Minima | 55,692 B | 4,464 B |
 
 ## Quick Example
 
@@ -190,6 +231,7 @@ Use a real terminal program instead:
 
 Building lish itself and running its BDD test suite is covered separately
 from this end-user documentation - see [`docs/SETUP.md`](docs/SETUP.md).
+Cutting a new release is covered in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 ## License
 

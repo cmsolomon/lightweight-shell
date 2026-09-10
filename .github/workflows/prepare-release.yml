@@ -1,0 +1,59 @@
+name: Prepare Release
+
+# Manually-triggered convenience wrapper around the real release process
+# (release.yml, which fires on a pushed tag - see docs/RELEASING.md). This
+# workflow's only job is: bump library.properties' version, commit it, tag
+# it, push both. Pushing the tag is what actually triggers release.yml's
+# build/verify/publish - this workflow never builds or publishes anything
+# itself, so there is exactly one place that decides what a release
+# actually requires passing.
+#
+# Run via the Actions tab ("Run workflow") or:
+#   gh workflow run prepare-release.yml -f bump=patch
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version part to bump (standard semver: minor resets patch to 0, major resets minor and patch to 0)'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  bump-and-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute new version
+        id: version
+        run: |
+          current="$(grep '^version=' library.properties | cut -d= -f2)"
+          IFS='.' read -r major minor patch <<< "$current"
+          case "${{ inputs.bump }}" in
+            major) major=$((major+1)); minor=0; patch=0 ;;
+            minor) minor=$((minor+1)); patch=0 ;;
+            patch) patch=$((patch+1)) ;;
+          esac
+          new="$major.$minor.$patch"
+          echo "Bumping $current -> $new (${{ inputs.bump }})"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "new=$new" >> "$GITHUB_OUTPUT"
+
+      - name: Update library.properties
+        run: sed -i "s/^version=.*/version=${{ steps.version.outputs.new }}/" library.properties
+
+      - name: Commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add library.properties
+          git commit -m "Bump version to ${{ steps.version.outputs.new }}"
+          git tag "${{ steps.version.outputs.new }}"
+          git push origin "HEAD:${{ github.ref_name }}" "${{ steps.version.outputs.new }}"

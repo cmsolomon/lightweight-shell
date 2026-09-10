@@ -254,7 +254,8 @@ private:
   ///
   /// @details
   /// Writes "[OK]" for a fully successful result (see CommandResult::succeeded()),
-  /// "[ERROR: Code NNN]" (zero-padded to 3 digits, '-' prefixed if negative) for
+  /// "[ERROR: Code N]" (N is result.code's plain decimal representation, no
+  /// zero-padding, '-' prefixed if negative - e.g. "5", "-5", "42") for
   /// ShellStatus::Ok with a nonzero code, or "[ERROR: <message>]" for
   /// CommandNotFound/PermissionDenied. Called exactly once per submitted line by
   /// on_submit() - a chain of `;`/`&&`-separated commands prints one status line for the

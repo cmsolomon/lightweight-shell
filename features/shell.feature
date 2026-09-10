@@ -177,11 +177,13 @@ Feature: Shell - Command Dispatch and Execution
     Given a command "success" that returns 0
     When I submit the line "success"
     Then the output should contain "[OK]"
+    And the output should be ACK-prefixed before "[OK]"
 
   Scenario: Command with non-zero exit code prints [ERROR: Code N]
     Given a command "fail" that returns 42
     When I submit the line "fail"
-    Then the output should contain "[ERROR: Code 042]"
+    Then the output should contain "[ERROR: Code 42]"
+    And the output should be NAK-prefixed before "[ERROR: Code 42]"
 
   Scenario: Unknown command prints [ERROR: Command not found]
     When I submit the line "nonexistent"
@@ -233,7 +235,7 @@ Feature: Shell - Command Dispatch and Execution
     Given a command "first" that returns 0
     And a command "second" that returns 5
     When I submit the line "first; second"
-    Then the output should contain "[ERROR: Code 005]"
+    Then the output should contain "[ERROR: Code 5]"
     And the output should not contain "[OK]"
 
   # IShell API (write/read/set_mode/mode) - exercised by real command handlers

@@ -163,6 +163,15 @@ Points that aren't obvious from the code's shape alone:
 - **Status is only ever printed once per line, not once per command.**
   `print_status()` is called exactly once by `on_submit()`, after the whole
   chain (however many segments it contained) has finished.
+- **Every status line is machine-parseable, not just human-readable.**
+  `print_status()` prefixes its message with a single ASCII control byte -
+  ACK (`0x06`) for a fully successful result, NAK (`0x15`) for any failure
+  (a nonzero return code, command not found, or permission denied) - always
+  as the first byte after the blank line it writes first. An automated
+  caller (a test harness, production tooling) can classify a result by
+  checking that one fixed-position byte, without string-matching the
+  bracketed text that follows it. See `STATUS_OK`/`STATUS_ERROR_PREFIX` in
+  `lishDefs.h`.
 
 ## Interactive Input Pipeline
 

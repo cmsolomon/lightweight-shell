@@ -112,6 +112,13 @@ if [ "$PKG_MANAGER" = "apt" ]; then
     sudo apt-get install -y \
         libgtest-dev
 
+    # lcov (also provides genhtml) - coverage instrumentation is mandatory,
+    # not optional (see CMakeLists.txt), so this is a hard requirement, not
+    # a nice-to-have.
+    echo "Installing lcov..."
+    sudo apt-get install -y \
+        lcov
+
 
 # ============================================================================
 # Fedora/RHEL/CentOS Installation (dnf/yum)
@@ -160,6 +167,13 @@ elif [ "$PKG_MANAGER" = "yum" ]; then
     $SUDO_PKG install -y \
         gtest-devel
 
+    # lcov (also provides genhtml) - coverage instrumentation is mandatory,
+    # not optional (see CMakeLists.txt), so this is a hard requirement, not
+    # a nice-to-have.
+    echo "Installing lcov..."
+    $SUDO_PKG install -y \
+        lcov
+
 
 # ============================================================================
 # macOS Installation (Homebrew)
@@ -188,6 +202,12 @@ elif [ "$PKG_MANAGER" = "brew" ]; then
     # Google Test
     echo "Installing Google Test..."
     brew install googletest
+
+    # lcov (also provides genhtml) - coverage instrumentation is mandatory,
+    # not optional (see CMakeLists.txt), so this is a hard requirement, not
+    # a nice-to-have.
+    echo "Installing lcov..."
+    brew install lcov
 
 fi
 
@@ -231,6 +251,19 @@ else
     export PATH="$ARDUINO_BIN_DIR:$PATH"
 fi
 
+# arduino-lint validates library.properties/structure against the exact
+# rules Arduino's Library Manager registry enforces - installed here too so
+# a compliance issue is caught locally, before it's discovered as a failed
+# release workflow run (see .github/workflows/release.yml).
+if command_exists arduino-lint; then
+    echo -e "${GREEN}✓ arduino-lint already installed${NC}: $(arduino-lint --version)"
+else
+    echo "Installing arduino-lint to $ARDUINO_BIN_DIR..."
+    mkdir -p "$ARDUINO_BIN_DIR"
+    curl -fsSL https://raw.githubusercontent.com/arduino/arduino-lint/main/etc/install.sh | BINDIR="$ARDUINO_BIN_DIR" sh
+    export PATH="$ARDUINO_BIN_DIR:$PATH"
+fi
+
 # Refresh arduino-cli's package index before installing any core - required on
 # a first run (there is no index to install from yet).
 echo "Updating arduino-cli package index..."
@@ -260,11 +293,15 @@ if [ "$OS" = "linux" ]; then
     echo ""
     echo -e "${YELLOW}Checking serial port permissions...${NC}"
 
-    if groups "$USER" | grep -qw dialout; then
-        echo -e "${GREEN}✓ $USER is already in the dialout group${NC}"
+    # $USER isn't reliably set outside an interactive login shell (e.g. a CI
+    # runner step, or `bash -c` invocations) - whoami always works.
+    CURRENT_USER="$(whoami)"
+
+    if groups "$CURRENT_USER" | grep -qw dialout; then
+        echo -e "${GREEN}✓ $CURRENT_USER is already in the dialout group${NC}"
     else
-        echo "Adding $USER to the dialout group..."
-        sudo usermod -aG dialout "$USER"
+        echo "Adding $CURRENT_USER to the dialout group..."
+        sudo usermod -aG dialout "$CURRENT_USER"
         echo -e "${YELLOW}⚠ Group membership only takes effect on your next login.${NC}"
         echo "  Log out and back in (or run 'newgrp dialout' in this shell) before"
         echo "  attempting to upload to a board with 'make arduino_run'."
@@ -309,6 +346,20 @@ elif [ "$OS" = "macos" ] && command_exists brew && brew list boost &> /dev/null;
     echo -e "${GREEN}✓ Boost libraries${NC} installed"
 fi
 
+# Check lcov/genhtml (coverage is mandatory, not optional - see CMakeLists.txt)
+if command_exists lcov; then
+    echo -e "${GREEN}✓ lcov${NC}: $(lcov --version | head -1)"
+else
+    echo -e "${RED}✗ lcov not found${NC}"
+    missing=$((missing + 1))
+fi
+if command_exists genhtml; then
+    echo -e "${GREEN}✓ genhtml${NC} found"
+else
+    echo -e "${RED}✗ genhtml not found${NC}"
+    missing=$((missing + 1))
+fi
+
 
 # Check arduino-cli and its board cores
 if command_exists arduino-cli; then
@@ -326,12 +377,21 @@ else
     missing=$((missing + 1))
 fi
 
+# Check arduino-lint
+if command_exists arduino-lint; then
+    echo -e "${GREEN}✓ arduino-lint${NC}: $(arduino-lint --version)"
+else
+    echo -e "${RED}✗ arduino-lint not found${NC}"
+    missing=$((missing + 1))
+fi
+
 # Check serial port group membership (Linux only)
 if [ "$OS" = "linux" ]; then
-    if groups "$USER" | grep -qw dialout; then
-        echo -e "${GREEN}✓ $USER in dialout group${NC} (upload permissions OK after next login)"
+    CURRENT_USER="$(whoami)"
+    if groups "$CURRENT_USER" | grep -qw dialout; then
+        echo -e "${GREEN}✓ $CURRENT_USER in dialout group${NC} (upload permissions OK after next login)"
     else
-        echo -e "${RED}✗ $USER not in dialout group${NC} (uploads will fail until this is fixed)"
+        echo -e "${RED}✗ $CURRENT_USER not in dialout group${NC} (uploads will fail until this is fixed)"
         missing=$((missing + 1))
     fi
 fi
@@ -344,17 +404,16 @@ if [ $missing -eq 0 ]; then
     echo ""
     echo "Next steps:"
     echo "  Host-side BDD tests:"
-    echo "    1. mkdir -p build && cd build"
-    echo "    2. cmake .."
-    echo "    3. cmake --build ."
-    echo "    4. ctest"
+    echo "    1. cmake -S . -B build"
+    echo "    2. cmake --build build"
+    echo "    3. ctest --test-dir build --output-on-failure"
     echo ""
-    echo "  Build and upload to a board (from the build/ directory above):"
-    echo "    5. make arduino_build"
-    echo "    6. make arduino_run"
+    echo "  Build and upload to a board:"
+    echo "    4. cmake --build build --target arduino_build"
+    echo "    5. cmake --build build --target arduino_run"
     echo ""
     echo "  If you were just added to the dialout group, log out and back in"
-    echo "  (or run 'newgrp dialout') before step 6."
+    echo "  (or run 'newgrp dialout') before step 5."
     exit 0
 else
     echo -e "${RED}✗ $missing prerequisite(s) missing${NC}"
