@@ -30,6 +30,12 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
+        with:
+          # main requires PRs for the default GITHUB_TOKEN's github-actions[bot]
+          # identity, which has no bypass on this personal-account repo. A PAT
+          # belonging to an admin (with that role on the bypass list) can push
+          # directly instead.
+          token: ${{ secrets.LISH_RELEASE_PAT }}
 
       - name: Compute new version
         id: version
