@@ -32,7 +32,7 @@ jobs:
       # below as a release asset, it's permanent (GitHub doesn't expire
       # release assets) - see docs/RELEASING.md.
       - name: Download test report and coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: test-report-and-coverage
 
