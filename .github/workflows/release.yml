@@ -24,7 +24,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # This is build-and-test.yml's `test` job's upload - a same-run
       # artifact download works across a workflow_call boundary. Its

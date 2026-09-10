@@ -16,7 +16,7 @@ jobs:
     # board cores, etc.) just to run.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install arduino-lint
         run: |
@@ -29,7 +29,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install prerequisites
         run: ./install-prerequisites.sh
@@ -70,7 +70,7 @@ jobs:
       matrix:
         preset: [uno, uno_r4, uno_r4_minima, mega]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install prerequisites
         run: ./install-prerequisites.sh
