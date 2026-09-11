@@ -276,11 +276,19 @@ override either before including the header), select the strategy:
   `constexpr const`, and `read_flash<T>()` is a plain dereference.
 
 Every command's name string, help string, and the `CmdDescriptor` itself
-(and the array of pointers to them) are meant to be declared with these
-macros - see `examples/BasicShell/cmd_echo.cpp` for the pattern. Nothing
-in the library enforces this at compile time (a descriptor built from
-plain RAM strings still works), it just costs RAM instead of Flash on AVR
-if you skip it.
+(and the array of pointers to them) MUST be declared with these macros on
+AVR - see `examples/BasicShell/cmd_echo.cpp` for the pattern. This is not
+just a Flash-vs-RAM footprint trade-off: `CmdDescriptor`'s accessors
+(`name()`, `help()`, `execute()`, `matches_hash()`) call `read_flash<T>()`
+unconditionally, regardless of where the data actually lives. On AVR, that
+means a `memcpy_P()`/Flash-load instruction fires no matter what - so a
+descriptor or string left in plain RAM doesn't "still work" using more RAM
+instead; the address is reinterpreted as a Flash address in that separate
+Harvard-architecture address space and read from there, producing garbled
+command names, help text, or lookups. Nothing in the library enforces the
+macros at compile time, and the bug is invisible on unified-address-space
+targets (ARM, x86, this repo's own host tests) - it only shows up once you
+flash real AVR hardware.
 
 ## Extending
 
