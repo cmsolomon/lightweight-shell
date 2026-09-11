@@ -157,12 +157,18 @@ AppContext app_ctx;
 
 class SerialIOAdapter {
 public:
-  void write(char c) { Serial.write(c); }
-  bool read(char& c, uint16_t timeout_ms = 0) {
+  void write(const char c) { Serial.write(c); }
+  bool read(char& c, const uint16_t timeout_ms = 0) {
     if (Serial.available()) { c = Serial.read(); return true; }
     return false;
   }
 };
+
+// LISH_PROGMEM/LISH_FLASH_STORAGE below aren't optional on AVR - see §2 of
+// docs/GETTING_STARTED.md for why omitting them silently corrupts command
+// names/help text on real AVR hardware, rather than failing to build.
+LISH_FLASH_STORAGE char CMD_PING_NAME[] LISH_PROGMEM = "ping";
+LISH_FLASH_STORAGE char CMD_PING_HELP[] LISH_PROGMEM = "Replies with pong";
 
 int8_t cmd_ping(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
   lish::unused(args);
@@ -171,10 +177,13 @@ int8_t cmd_ping(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
   return 0;
 }
 
-const lish::CmdDescriptor cmd_ping_descriptor = lish::CmdDescriptor::make<AppContext, &cmd_ping>(
-  "ping", lish::CmdPermission::AllModes, "Replies with pong");
+const lish::CmdDescriptor LISH_PROGMEM cmd_ping_descriptor =
+  lish::CmdDescriptor::make<AppContext, &cmd_ping>(
+    CMD_PING_NAME, lish::CmdPermission::AllModes, CMD_PING_HELP);
 
-const lish::CmdDescriptor* const commands[] = { &cmd_ping_descriptor };
+LISH_FLASH_STORAGE lish::CmdDescriptor* const LISH_PROGMEM commands[] = {
+  &cmd_ping_descriptor
+};
 
 auto shell = lish::make_shell<SerialIOAdapter, 5, 32>(app_ctx, commands);
 
@@ -188,15 +197,10 @@ void loop() {
 }
 ```
 
-This version skips Flash/PROGMEM placement to stay minimal - **fine for a
-desktop/ARM sketch, but broken on real AVR hardware** (Uno, Nano, Mega):
-`CmdDescriptor` always reads its name/help/descriptor storage back through
-Flash-load instructions, so on AVR these MUST live in Flash via
-`LISH_PROGMEM`/`LISH_FLASH_STORAGE`, or you get garbled command names and
-help text rather than a build error - see
-[§2](docs/GETTING_STARTED.md#2-writing-a-command) of the Getting Started
-guide for why, and the Flash-correct pattern `examples/BasicShell` actually
-uses.
+This is the same Flash-correct pattern `examples/BasicShell` uses, just with
+one command - see the [Getting Started guide](docs/GETTING_STARTED.md) for
+the full walkthrough (I/O adapter, command array, context object, custom
+prompts) and `examples/BasicShell` for a larger, runnable sketch.
 
 ## Terminal Requirements
 
