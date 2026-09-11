@@ -76,7 +76,7 @@ int8_t cmd_echo(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
   return 0;
 }
 
-const lish::CmdDescriptor LISH_PROGMEM cmd_echo_descriptor =
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_echo_descriptor =
   lish::CmdDescriptor::make<AppContext, &cmd_echo>(
     CMD_ECHO_NAME, lish::CmdPermission::Mode6, CMD_ECHO_HELP);
 ```

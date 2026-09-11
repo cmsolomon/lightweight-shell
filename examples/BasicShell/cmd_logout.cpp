@@ -55,7 +55,7 @@ int8_t cmd_logout(const lish::Args& args, lish::IShell& shell, AppContext& ctx) 
 // ============================================================================
 
 // Available in all modes except Mode0, hidden in Mode0
-const lish::CmdDescriptor LISH_PROGMEM cmd_logout_descriptor =
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_logout_descriptor =
   lish::CmdDescriptor::make<AppContext, &cmd_logout>(
     CMD_LOGOUT_NAME,
     (lish::CmdPermission::AllModes & ~lish::CmdPermission::Mode0) | lish::CmdPermission::HideWhenUnavailable,

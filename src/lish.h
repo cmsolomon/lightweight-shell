@@ -51,7 +51,7 @@ namespace lish {
 /// LISH_FLASH_STORAGE char CMD_ECHO_NAME[] LISH_PROGMEM = "echo";
 /// LISH_FLASH_STORAGE char CMD_ECHO_HELP[] LISH_PROGMEM = "Echo arguments back to output";
 /// int8_t cmd_echo(const lish::Args& args, lish::IShell& shell, AppContext& ctx) { ... }
-/// const lish::CmdDescriptor LISH_PROGMEM cmd_echo_descriptor =
+/// LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_echo_descriptor =
 ///   lish::CmdDescriptor::make<AppContext, &cmd_echo>(
 ///     CMD_ECHO_NAME, lish::CmdPermission::AllModes, CMD_ECHO_HELP);
 ///

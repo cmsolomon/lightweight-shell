@@ -177,7 +177,7 @@ int8_t cmd_ping(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
   return 0;
 }
 
-const lish::CmdDescriptor LISH_PROGMEM cmd_ping_descriptor =
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_ping_descriptor =
   lish::CmdDescriptor::make<AppContext, &cmd_ping>(
     CMD_PING_NAME, lish::CmdPermission::AllModes, CMD_PING_HELP);
 

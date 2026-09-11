@@ -54,6 +54,6 @@ int8_t cmd_whoami(const lish::Args& args, lish::IShell& shell, AppContext& ctx) 
 // Command Descriptor (PROGMEM)
 // ============================================================================
 
-const lish::CmdDescriptor LISH_PROGMEM cmd_whoami_descriptor =
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_whoami_descriptor =
   lish::CmdDescriptor::make<AppContext, &cmd_whoami>(
     CMD_WHOAMI_NAME, lish::CmdPermission::AllModes, CMD_WHOAMI_HELP);

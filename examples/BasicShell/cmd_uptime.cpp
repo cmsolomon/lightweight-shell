@@ -73,6 +73,6 @@ int8_t cmd_uptime(const lish::Args& args, lish::IShell& shell, AppContext& ctx) 
 // Command Descriptor (PROGMEM)
 // ============================================================================
 
-const lish::CmdDescriptor LISH_PROGMEM cmd_uptime_descriptor =
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_uptime_descriptor =
   lish::CmdDescriptor::make<AppContext, &cmd_uptime>(
     CMD_UPTIME_NAME, lish::CmdPermission::AllModes, CMD_UPTIME_HELP);

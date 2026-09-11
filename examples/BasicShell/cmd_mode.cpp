@@ -70,6 +70,6 @@ int8_t cmd_mode(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
 // Command Descriptor (PROGMEM)
 // ============================================================================
 
-const lish::CmdDescriptor LISH_PROGMEM cmd_mode_descriptor =
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_mode_descriptor =
   lish::CmdDescriptor::make<AppContext, &cmd_mode>(
     CMD_MODE_NAME, lish::CmdPermission::AllModes & ~lish::CmdPermission::Mode0, CMD_MODE_HELP);

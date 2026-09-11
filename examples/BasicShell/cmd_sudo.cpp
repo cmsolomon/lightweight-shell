@@ -86,6 +86,6 @@ int8_t cmd_sudo(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
 // Command Descriptor (PROGMEM)
 // ============================================================================
 
-const lish::CmdDescriptor LISH_PROGMEM cmd_sudo_descriptor =
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_sudo_descriptor =
   lish::CmdDescriptor::make<AppContext, &cmd_sudo>(
     CMD_SUDO_NAME, lish::CmdPermission::Mode2, CMD_SUDO_HELP);
