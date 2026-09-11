@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/lish.svg" alt="lish" width="80">
+  <img src="assets/lish.svg" alt="LiSh" width="80">
 </p>
 
 # Getting Started
 
-This walks through everything needed to wire lish into your own sketch: the
+This walks through everything needed to wire LiSh into your own sketch: the
 I/O adapter, writing a command, the command array, and the context object.
 Every code sample here is drawn from the real, compiling
 [`examples/BasicShell`](../examples/BasicShell) - see that folder for a
@@ -13,17 +13,17 @@ and a custom prompt.
 
 ## 1. The I/O Adapter
 
-lish talks to the outside world through an I/O adapter: any type with two
+LiSh talks to the outside world through an I/O adapter: any type with two
 methods.
 
 ```cpp
 class SerialIOAdapter {
 public:
-  void write(char c) {
+  void write(const char c) {
     Serial.write(c);
   }
 
-  bool read(char& c, uint16_t timeout_ms = 0) {
+  bool read(char& c, const uint16_t timeout_ms = 0) {
     unsigned long start = millis();
     bool infinite = (timeout_ms == 0xFFFF);
     while (true) {
@@ -76,7 +76,7 @@ int8_t cmd_echo(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
   return 0;
 }
 
-const lish::CmdDescriptor LISH_PROGMEM cmd_echo_descriptor =
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_echo_descriptor =
   lish::CmdDescriptor::make<AppContext, &cmd_echo>(
     CMD_ECHO_NAME, lish::CmdPermission::Mode6, CMD_ECHO_HELP);
 ```
@@ -110,11 +110,24 @@ int8_t handler(const lish::Args& args, lish::IShell& shell, YourContextType& ctx
 the descriptor: `ContextType` must match your handler's context parameter
 type exactly (every command sharing one `Shell` instance uses the same
 `ContextType`), and `permission` is a `lish::CmdPermission` value (see
-[§5](#5-permission-modes) below). `LISH_PROGMEM`/`LISH_FLASH_STORAGE` place
-the name string, help string, and the descriptor itself into Flash on AVR
-(a no-op on platforms with a unified address space) - see the
-[Memory & Flash Footprint](../README.md#memory--flash-footprint) section of
-the README for why this matters.
+[§5](#5-permission-modes) below).
+
+**`LISH_PROGMEM`/`LISH_FLASH_STORAGE` on the name string, the help string,
+and the descriptor itself (as shown above) are not optional on AVR** - this
+is a correctness requirement, not a size optimization. `CmdDescriptor`'s
+accessors read all three back via Flash-load instructions
+(`pgm_read_byte`/`memcpy_P`) unconditionally, regardless of where you
+actually put them. AVR is Harvard-architecture: RAM and Flash are separate
+address spaces that both start at address 0, so if you skip the macros and
+let a string or descriptor land in RAM instead, a Flash-load instruction
+given that RAM address doesn't fail - it reads whatever happens to be at
+that same numeric address *in Flash*, silently producing garbled command
+names and help text. It's a no-op on unified-address-space targets (ARM,
+x86, this repo's own host tests), which is exactly why the bug is invisible
+until you flash real AVR hardware - passing on Uno R4 or in the host test
+suite proves nothing about Uno/Nano/Mega correctness here. See
+[Memory & Flash Footprint](../README.md#memory--flash-footprint) for the
+size upside, but treat the macros themselves as required on any AVR target.
 
 ## 3. The Command Array
 
@@ -233,4 +246,4 @@ login prompt), but `service()` never blocks waiting for the *next* line.
   [Terminal Requirements](../README.md#terminal-requirements) in the
   README for why and what to use instead.
 - See the [Architecture](ARCHITECTURE.md) primer if you're contributing to
-  lish itself, not just using it.
+  LiSh itself, not just using it.

@@ -193,7 +193,9 @@ inline bool string_matches(const char* const ram_str, const char* const flash_st
 /// @param io IO adapter instance for writing output.
 template<typename IOAdapter>
 inline void write_string(const char* const str, IOAdapter& io) {
-  if (!str) return;
+  if (!str) {
+    return;
+  }
   for (size_t i = 0; str[i] != '\0'; ++i) {
     io.write(str[i]);
   }
@@ -219,10 +221,14 @@ inline void write_string(const char* const str, IOAdapter& io) {
 ///          may produce incorrect output or undefined behavior on AVR.
 template<typename IOAdapter>
 inline void write_flash_string(const char* const flash_str, IOAdapter& io) {
-  if (!flash_str) return;
+  if (!flash_str) {
+    return;
+  }
   for (size_t i = 0; ; ++i) {
     char c = read_flash_char(flash_str + i);
-    if (c == '\0') break;
+    if (c == '\0') {
+      break;
+    }
     io.write(c);
   }
 }

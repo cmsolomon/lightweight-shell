@@ -114,6 +114,6 @@ int8_t cmd_login(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
 // Command Descriptor (PROGMEM)
 // ============================================================================
 
-const lish::CmdDescriptor LISH_PROGMEM cmd_login_descriptor =
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_login_descriptor =
   lish::CmdDescriptor::make<AppContext, &cmd_login>(
     CMD_LOGIN_NAME, lish::CmdPermission::Mode0 | lish::CmdPermission::HideWhenUnavailable, CMD_LOGIN_HELP);

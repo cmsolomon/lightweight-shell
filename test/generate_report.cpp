@@ -462,11 +462,11 @@ int main(const int argc, const char* const argv[]) {
     html << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n"
          << "  <meta charset=\"UTF-8\">\n"
          << "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-         << "  <title>lish Test Report</title>\n";
+         << "  <title>LiSh Test Report</title>\n";
     write_styles(html, all_passed);
     html << "</head>\n<body>\n  <div class=\"container\">\n"
          << "    <div class=\"header\">\n"
-         << "      <h1>\U0001F9EA lish Test Report</h1>\n"
+         << "      <h1>\U0001F9EA LiSh Test Report</h1>\n"
          << "      <p>Build and test results</p>\n\n"
          << "      <div class=\"summary\">\n"
          << "        <div class=\"summary-card\"><div class=\"number\">" << totals.total_scenarios

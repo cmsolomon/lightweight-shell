@@ -387,7 +387,9 @@ void InputProcessor<IOAdapter, LineEditorType, HistoryType, PromptCallbackType, 
   shell_.print_prompt();
 
   for (uint8_t i = 0; i < MaxLineLength; ++i) {
-    if (entry[i] == '\0') break;
+    if (entry[i] == '\0') {
+      break;
+    }
     io_.write(entry[i]);
   }
 }

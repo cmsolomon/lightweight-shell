@@ -43,11 +43,11 @@ struct SharedTestIOAdapter {
     static inline std::vector<char> read_queue;
     static inline size_t read_pos = 0;
 
-    void write(char c) {
+    void write(const char c) {
         written.push_back(c);
     }
 
-    bool read(char& c, uint16_t timeout_ms = 0) {
+    bool read(char& c, const uint16_t timeout_ms = 0) {
         (void)timeout_ms;
         if (read_pos >= read_queue.size()) {
             return false;

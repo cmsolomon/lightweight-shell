@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/lish.svg" alt="lish" width="80">
+  <img src="assets/lish.svg" alt="LiSh" width="80">
 </p>
 
 # Releasing
 
-How to cut a new version of lish. For building/testing day-to-day, see
+How to cut a new version of LiSh. For building/testing day-to-day, see
 [SETUP.md](SETUP.md) instead - this is specifically about publishing a
 release.
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/lish-horizontal.svg" alt="lish" width="360">
+  <img src="docs/assets/lish-horizontal.svg" alt="LiSh" width="360">
 </p>
 
 <p align="center">
@@ -9,14 +9,14 @@
 <p align="center">
   <a href="https://github.com/cmsolomon/lightweight-shell/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/cmsolomon/lightweight-shell/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <!-- TODO: GitHub Sponsors badge - pending sponsor account setup -->
+  <a href="https://github.com/sponsors/cmsolomon"><img alt="Sponsor" src="https://img.shields.io/badge/sponsor-%E2%9D%A4-db61a2.svg?logo=github-sponsors"></a>
 </p>
 
 ---
 
-## What is lish?
+## What is LiSh?
 
-**lish** (short for *lightweight-shell*) gives a microcontroller a real, editable
+**LiSh** (short for *lightweight-shell*) gives a microcontroller a real, editable
 command line over any character stream you can `write()` to and `read()` from:
 arrow-key history, tab completion, backspace/cursor editing, multi-command
 chaining (`;` / `&&`), quoted arguments, and role-based permission modes -
@@ -89,12 +89,12 @@ toolchain this repo's own build uses:
 | Configuration | Flash | RAM |
 |---|---:|---:|
 | Empty sketch (baseline) | 444 B | 9 B |
-| Serial only, no lish | 1,468 B | 184 B |
-| lish wired to Serial, zero commands registered | 9,590 B | 342 B |
+| Serial only, no LiSh | 1,468 B | 184 B |
+| LiSh wired to Serial, zero commands registered | 9,590 B | 342 B |
 | `examples/BasicShell` (8 commands, login + permission modes) | 12,826 B | 419 B |
 
-"lish wired to Serial, zero commands" is the smallest a real, working shell
-built with this library can be. Serial alone (no lish at all) accounts for
+"LiSh wired to Serial, zero commands" is the smallest a real, working shell
+built with this library can be. Serial alone (no LiSh at all) accounts for
 only about 1 KB of that - the rest (roughly 8 KB) is genuinely the shell:
 line editor, history, tab completion, dispatch, help formatting, ANSI
 handling. We don't further split "the shell" from "your I/O driver" by
@@ -107,7 +107,7 @@ Your own commands and `AppContext` add on top from there: the 8 commands in
 the built-in help) added roughly 3 KB over the zero-command baseline above
 - actual cost per command varies with what it does.
 
-### How much of that is lish itself
+### How much of that is LiSh itself
 
 The diffing approach above answers "how big is a working shell," but not
 "how many of those bytes are the library's own code" - for that, the
@@ -131,10 +131,10 @@ The 24-48 bytes of RAM is entirely `IShell`'s vtable - the one virtual
 interface in the library (see [Features](#features)); everything else is
 flash. The remaining flash on each board - roughly 4.9 KB on Uno, ~53 KB
 on Uno R4 - is Arduino core startup/runtime, the `Serial`/UART driver, and
-`examples/BasicShell`'s own 8 command handlers plus `AppContext`, not lish
+`examples/BasicShell`'s own 8 command handlers plus `AppContext`, not LiSh
 itself; the much larger absolute total on Uno R4 is mostly the Renesas
 core's own runtime overhead (a full Cortex-M4 startup/USB/clock stack),
-not anything to do with lish's relative size.
+not anything to do with LiSh's relative size.
 
 `examples/BasicShell` compiles cleanly on every board preset this repo
 supports (verified via `cmake --build build --target arduino_build` for
@@ -157,12 +157,18 @@ AppContext app_ctx;
 
 class SerialIOAdapter {
 public:
-  void write(char c) { Serial.write(c); }
-  bool read(char& c, uint16_t timeout_ms = 0) {
+  void write(const char c) { Serial.write(c); }
+  bool read(char& c, const uint16_t timeout_ms = 0) {
     if (Serial.available()) { c = Serial.read(); return true; }
     return false;
   }
 };
+
+// LISH_PROGMEM/LISH_FLASH_STORAGE below aren't optional on AVR - see §2 of
+// docs/GETTING_STARTED.md for why omitting them silently corrupts command
+// names/help text on real AVR hardware, rather than failing to build.
+LISH_FLASH_STORAGE char CMD_PING_NAME[] LISH_PROGMEM = "ping";
+LISH_FLASH_STORAGE char CMD_PING_HELP[] LISH_PROGMEM = "Replies with pong";
 
 int8_t cmd_ping(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
   lish::unused(args);
@@ -171,10 +177,13 @@ int8_t cmd_ping(const lish::Args& args, lish::IShell& shell, AppContext& ctx) {
   return 0;
 }
 
-const lish::CmdDescriptor cmd_ping_descriptor = lish::CmdDescriptor::make<AppContext, &cmd_ping>(
-  "ping", lish::CmdPermission::AllModes, "Replies with pong");
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_ping_descriptor =
+  lish::CmdDescriptor::make<AppContext, &cmd_ping>(
+    CMD_PING_NAME, lish::CmdPermission::AllModes, CMD_PING_HELP);
 
-const lish::CmdDescriptor* const commands[] = { &cmd_ping_descriptor };
+LISH_FLASH_STORAGE lish::CmdDescriptor* const LISH_PROGMEM commands[] = {
+  &cmd_ping_descriptor
+};
 
 auto shell = lish::make_shell<SerialIOAdapter, 5, 32>(app_ctx, commands);
 
@@ -188,14 +197,15 @@ void loop() {
 }
 ```
 
-This version skips Flash/PROGMEM placement to stay minimal - see the
-[Getting Started guide](docs/GETTING_STARTED.md) for the Flash-optimized
-pattern `examples/BasicShell` actually uses.
+This is the same Flash-correct pattern `examples/BasicShell` uses, just with
+one command - see the [Getting Started guide](docs/GETTING_STARTED.md) for
+the full walkthrough (I/O adapter, command array, context object, custom
+prompts) and `examples/BasicShell` for a larger, runnable sketch.
 
 ## Terminal Requirements
 
-The Arduino IDE's built-in Serial Monitor is not a good way to use lish -
-use a dedicated terminal program instead. lish's interactive features -
+The Arduino IDE's built-in Serial Monitor is not a good way to use LiSh -
+use a dedicated terminal program instead. LiSh's interactive features -
 line editing, cursor movement, arrow-key history, dimmed help listings -
 all work by sending real VT100/ANSI escape sequences over the wire (see
 [Features](#features) above). The built-in Serial Monitor is just a raw
@@ -229,7 +239,7 @@ Use a real terminal program instead:
 
 ## Contributing
 
-Building lish itself and running its BDD test suite is covered separately
+Building LiSh itself and running its BDD test suite is covered separately
 from this end-user documentation - see [`docs/SETUP.md`](docs/SETUP.md).
 Cutting a new release is covered in [`docs/RELEASING.md`](docs/RELEASING.md).
 

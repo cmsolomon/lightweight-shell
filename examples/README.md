@@ -1,6 +1,6 @@
-# lish Examples
+# LiSh Examples
 
-This directory contains example sketches demonstrating how to use the lish (lightweight-shell) embedded shell library.
+This directory contains example sketches demonstrating how to use the LiSh (lightweight-shell) embedded shell library.
 
 ## BasicShell
 
@@ -41,7 +41,7 @@ A minimal interactive shell for Arduino running over Serial (UART).
 
 ## Architecture Notes
 
-The example shows the typical pattern for using lish:
+The example shows the typical pattern for using LiSh:
 
 ```cpp
 // 1. Define your application context - whatever state your commands need to
@@ -53,11 +53,11 @@ struct AppContext {
 // 2. Create an IOAdapter for your communication channel
 class MyIOAdapter {
 public:
-  void write(char c) { /* send to your channel */ }
+  void write(const char c) { /* send to your channel */ }
 
   // timeout_ms: 0 = non-blocking (return false if nothing available),
   // 0xFFFF = block forever, N = block for up to N milliseconds
-  bool read(char& c, uint16_t timeout_ms = 0) { /* receive from your channel */ }
+  bool read(char& c, const uint16_t timeout_ms = 0) { /* receive from your channel */ }
 };
 
 // 3. Implement command functions - context arrives as a real, typed reference,
@@ -73,11 +73,20 @@ int8_t my_command(const lish::Args& args, lish::IShell& shell, AppContext& ctx) 
 // 4. Declare a command descriptor for each command, then collect pointers to
 // them into a command table. Handler and context type are bound at compile
 // time via the make<>() template arguments.
-const lish::CmdDescriptor cmd_my_command_descriptor =
-  lish::CmdDescriptor::make<AppContext, &my_command>(
-    "cmd", lish::CmdPermission::Mode0, "Help text");
+//
+// LISH_PROGMEM/LISH_FLASH_STORAGE below aren't optional on AVR: the name
+// string, help string, descriptor, and command array are all read back
+// through Flash-load instructions unconditionally, so leaving any of them
+// in plain RAM doesn't just cost more RAM - it silently corrupts what gets
+// read back (see docs/GETTING_STARTED.md, §2, for why).
+LISH_FLASH_STORAGE char CMD_MY_COMMAND_NAME[] LISH_PROGMEM = "cmd";
+LISH_FLASH_STORAGE char CMD_MY_COMMAND_HELP[] LISH_PROGMEM = "Help text";
 
-const lish::CmdDescriptor* const commands[] = {
+LISH_FLASH_STORAGE lish::CmdDescriptor LISH_PROGMEM cmd_my_command_descriptor =
+  lish::CmdDescriptor::make<AppContext, &my_command>(
+    CMD_MY_COMMAND_NAME, lish::CmdPermission::Mode0, CMD_MY_COMMAND_HELP);
+
+LISH_FLASH_STORAGE lish::CmdDescriptor* const LISH_PROGMEM commands[] = {
   &cmd_my_command_descriptor,
 };
 

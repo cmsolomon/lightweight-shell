@@ -115,7 +115,9 @@ THEN(then_modes_available, "only the following modes should be available: {strin
         size_t start = 0;
         while (start < expected_str.length()) {
             size_t end = expected_str.find(",", start);
-            if (end == std::string::npos) end = expected_str.length();
+            if (end == std::string::npos) {
+                end = expected_str.length();
+            }
 
             std::string mode = expected_str.substr(start, end - start);
             mode.erase(0, mode.find_first_not_of(" "));

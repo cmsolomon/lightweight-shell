@@ -39,7 +39,9 @@ struct HistoryContext {
 
     void fill_line_buffer(const std::string& cmd) {
         size_t len = cmd.length();
-        if (len >= MaxLineLength) len = MaxLineLength - 1;
+        if (len >= MaxLineLength) {
+            len = MaxLineLength - 1;
+        }
         std::memcpy(line_buffer_, cmd.c_str(), len);
         line_buffer_[len] = '\0';
     }
@@ -62,7 +64,9 @@ struct SmallHistoryContext {
 
     void fill_line_buffer(const std::string& cmd) {
         size_t len = cmd.length();
-        if (len >= MaxLineLength) len = MaxLineLength - 1;
+        if (len >= MaxLineLength) {
+            len = MaxLineLength - 1;
+        }
         std::memcpy(line_buffer_, cmd.c_str(), len);
         line_buffer_[len] = '\0';
     }

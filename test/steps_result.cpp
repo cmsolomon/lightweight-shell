@@ -28,10 +28,18 @@
 /// Parses status name strings like "Ok", "CommandNotFound", etc. for test parameterization.
 
 static lish::ShellStatus string_to_status(const std::string& status_str) {
-    if (status_str == "Ok") return lish::ShellStatus::Ok;
-    if (status_str == "CommandNotFound") return lish::ShellStatus::CommandNotFound;
-    if (status_str == "PermissionDenied") return lish::ShellStatus::PermissionDenied;
-    if (status_str == "EmptyCommand") return lish::ShellStatus::EmptyCommand;
+    if (status_str == "Ok") {
+        return lish::ShellStatus::Ok;
+    }
+    if (status_str == "CommandNotFound") {
+        return lish::ShellStatus::CommandNotFound;
+    }
+    if (status_str == "PermissionDenied") {
+        return lish::ShellStatus::PermissionDenied;
+    }
+    if (status_str == "EmptyCommand") {
+        return lish::ShellStatus::EmptyCommand;
+    }
     return lish::ShellStatus::Ok;
 }
 
