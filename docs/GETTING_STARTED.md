@@ -110,11 +110,24 @@ int8_t handler(const lish::Args& args, lish::IShell& shell, YourContextType& ctx
 the descriptor: `ContextType` must match your handler's context parameter
 type exactly (every command sharing one `Shell` instance uses the same
 `ContextType`), and `permission` is a `lish::CmdPermission` value (see
-[§5](#5-permission-modes) below). `LISH_PROGMEM`/`LISH_FLASH_STORAGE` place
-the name string, help string, and the descriptor itself into Flash on AVR
-(a no-op on platforms with a unified address space) - see the
-[Memory & Flash Footprint](../README.md#memory--flash-footprint) section of
-the README for why this matters.
+[§5](#5-permission-modes) below).
+
+**`LISH_PROGMEM`/`LISH_FLASH_STORAGE` on the name string, the help string,
+and the descriptor itself (as shown above) are not optional on AVR** - this
+is a correctness requirement, not a size optimization. `CmdDescriptor`'s
+accessors read all three back via Flash-load instructions
+(`pgm_read_byte`/`memcpy_P`) unconditionally, regardless of where you
+actually put them. AVR is Harvard-architecture: RAM and Flash are separate
+address spaces that both start at address 0, so if you skip the macros and
+let a string or descriptor land in RAM instead, a Flash-load instruction
+given that RAM address doesn't fail - it reads whatever happens to be at
+that same numeric address *in Flash*, silently producing garbled command
+names and help text. It's a no-op on unified-address-space targets (ARM,
+x86, this repo's own host tests), which is exactly why the bug is invisible
+until you flash real AVR hardware - passing on Uno R4 or in the host test
+suite proves nothing about Uno/Nano/Mega correctness here. See
+[Memory & Flash Footprint](../README.md#memory--flash-footprint) for the
+size upside, but treat the macros themselves as required on any AVR target.
 
 ## 3. The Command Array
 

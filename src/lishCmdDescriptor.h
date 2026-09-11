@@ -43,6 +43,18 @@ typedef int8_t (*CommandFunction)(const Args& args, IShell& shell, void* context
 /// Descriptors are created via the make() factory method, which deduces the handler type at
 /// compile time, ensuring type safety while remaining constant-sized in memory. All string
 /// pointers refer to Flash-stored data.
+///
+/// @warning On AVR, the descriptor itself and its `name`/`help` strings MUST be placed in
+///          Flash via `LISH_PROGMEM`/`LISH_FLASH_STORAGE` - see make(). This is not an
+///          optimization; the accessors below unconditionally read through Flash-load
+///          instructions (`memcpy_P`/`pgm_read_byte`), which reinterpret whatever address
+///          they're given as a Flash address. AVR is Harvard-architecture: RAM and Flash
+///          are separate address spaces that both start at 0, so a RAM address handed to a
+///          Flash-read instruction is a *valid but wrong* address - it silently reads
+///          whatever happens to live in Flash at that numeric offset instead of your
+///          string, rather than failing loudly. The bug is invisible on ARM/x86 (unified
+///          address space, so the "wrong" read is also correct) and only shows up as
+///          garbled command names/help text on real AVR hardware.
 class CmdDescriptor {
 private:
   const char* const name_;             ///< Command name (stored in Flash/PROGMEM)
@@ -126,8 +138,13 @@ public:
   ///
   /// @return A new CmdDescriptor wrapping the handler with pre-computed hash.
   ///
-  /// @note All string parameters should be string literals or variables with
-  ///       LISH_PROGMEM attribute for Flash storage on AVR platforms.
+  /// @warning `name` and `help` MUST be `LISH_FLASH_STORAGE`/`LISH_PROGMEM` strings, and the
+  ///          returned CmdDescriptor MUST itself be stored with `LISH_PROGMEM` - on AVR these
+  ///          are read back via Flash-load instructions unconditionally, not just when
+  ///          convenient. A plain RAM string literal or a non-PROGMEM descriptor still
+  ///          *compiles and links* - it just reads back garbage on real AVR hardware (see
+  ///          the class-level @warning above for why), while working fine on ARM/x86. Don't
+  ///          rely on Uno R4/desktop testing alone to catch a missing LISH_PROGMEM.
   ///
   /// ## Usage Example
   /// @code

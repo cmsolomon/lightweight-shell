@@ -188,14 +188,20 @@ void loop() {
 }
 ```
 
-This version skips Flash/PROGMEM placement to stay minimal - see the
-[Getting Started guide](docs/GETTING_STARTED.md) for the Flash-optimized
-pattern `examples/BasicShell` actually uses.
+This version skips Flash/PROGMEM placement to stay minimal - **fine for a
+desktop/ARM sketch, but broken on real AVR hardware** (Uno, Nano, Mega):
+`CmdDescriptor` always reads its name/help/descriptor storage back through
+Flash-load instructions, so on AVR these MUST live in Flash via
+`LISH_PROGMEM`/`LISH_FLASH_STORAGE`, or you get garbled command names and
+help text rather than a build error - see
+[§2](docs/GETTING_STARTED.md#2-writing-a-command) of the Getting Started
+guide for why, and the Flash-correct pattern `examples/BasicShell` actually
+uses.
 
 ## Terminal Requirements
 
-The Arduino IDE's built-in Serial Monitor is not a good way to use lish -
-use a dedicated terminal program instead. lish's interactive features -
+The Arduino IDE's built-in Serial Monitor is not a good way to use LiSh -
+use a dedicated terminal program instead. LiSh's interactive features -
 line editing, cursor movement, arrow-key history, dimmed help listings -
 all work by sending real VT100/ANSI escape sequences over the wire (see
 [Features](#features) above). The built-in Serial Monitor is just a raw
