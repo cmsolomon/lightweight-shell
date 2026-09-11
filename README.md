@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/lish-horizontal.svg" alt="lish" width="360">
+  <img src="docs/assets/lish-horizontal.svg" alt="LiSh" width="360">
 </p>
 
 <p align="center">
@@ -14,9 +14,9 @@
 
 ---
 
-## What is lish?
+## What is LiSh?
 
-**lish** (short for *lightweight-shell*) gives a microcontroller a real, editable
+**LiSh** (short for *lightweight-shell*) gives a microcontroller a real, editable
 command line over any character stream you can `write()` to and `read()` from:
 arrow-key history, tab completion, backspace/cursor editing, multi-command
 chaining (`;` / `&&`), quoted arguments, and role-based permission modes -
@@ -89,12 +89,12 @@ toolchain this repo's own build uses:
 | Configuration | Flash | RAM |
 |---|---:|---:|
 | Empty sketch (baseline) | 444 B | 9 B |
-| Serial only, no lish | 1,468 B | 184 B |
-| lish wired to Serial, zero commands registered | 9,590 B | 342 B |
+| Serial only, no LiSh | 1,468 B | 184 B |
+| LiSh wired to Serial, zero commands registered | 9,590 B | 342 B |
 | `examples/BasicShell` (8 commands, login + permission modes) | 12,826 B | 419 B |
 
-"lish wired to Serial, zero commands" is the smallest a real, working shell
-built with this library can be. Serial alone (no lish at all) accounts for
+"LiSh wired to Serial, zero commands" is the smallest a real, working shell
+built with this library can be. Serial alone (no LiSh at all) accounts for
 only about 1 KB of that - the rest (roughly 8 KB) is genuinely the shell:
 line editor, history, tab completion, dispatch, help formatting, ANSI
 handling. We don't further split "the shell" from "your I/O driver" by
@@ -107,7 +107,7 @@ Your own commands and `AppContext` add on top from there: the 8 commands in
 the built-in help) added roughly 3 KB over the zero-command baseline above
 - actual cost per command varies with what it does.
 
-### How much of that is lish itself
+### How much of that is LiSh itself
 
 The diffing approach above answers "how big is a working shell," but not
 "how many of those bytes are the library's own code" - for that, the
@@ -131,10 +131,10 @@ The 24-48 bytes of RAM is entirely `IShell`'s vtable - the one virtual
 interface in the library (see [Features](#features)); everything else is
 flash. The remaining flash on each board - roughly 4.9 KB on Uno, ~53 KB
 on Uno R4 - is Arduino core startup/runtime, the `Serial`/UART driver, and
-`examples/BasicShell`'s own 8 command handlers plus `AppContext`, not lish
+`examples/BasicShell`'s own 8 command handlers plus `AppContext`, not LiSh
 itself; the much larger absolute total on Uno R4 is mostly the Renesas
 core's own runtime overhead (a full Cortex-M4 startup/USB/clock stack),
-not anything to do with lish's relative size.
+not anything to do with LiSh's relative size.
 
 `examples/BasicShell` compiles cleanly on every board preset this repo
 supports (verified via `cmake --build build --target arduino_build` for
@@ -229,7 +229,7 @@ Use a real terminal program instead:
 
 ## Contributing
 
-Building lish itself and running its BDD test suite is covered separately
+Building LiSh itself and running its BDD test suite is covered separately
 from this end-user documentation - see [`docs/SETUP.md`](docs/SETUP.md).
 Cutting a new release is covered in [`docs/RELEASING.md`](docs/RELEASING.md).
 

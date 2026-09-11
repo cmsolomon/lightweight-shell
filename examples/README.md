@@ -1,6 +1,6 @@
-# lish Examples
+# LiSh Examples
 
-This directory contains example sketches demonstrating how to use the lish (lightweight-shell) embedded shell library.
+This directory contains example sketches demonstrating how to use the LiSh (lightweight-shell) embedded shell library.
 
 ## BasicShell
 
@@ -41,7 +41,7 @@ A minimal interactive shell for Arduino running over Serial (UART).
 
 ## Architecture Notes
 
-The example shows the typical pattern for using lish:
+The example shows the typical pattern for using LiSh:
 
 ```cpp
 // 1. Define your application context - whatever state your commands need to

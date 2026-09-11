@@ -1,4 +1,4 @@
-# lightweight-shell (lish) Library Keywords
+# lightweight-shell (LiSh) Library Keywords
 # https://www.arduino.cc/en/Reference/APIStyleGuide
 
 # Classes, structs, and enum types (KEYWORD1)

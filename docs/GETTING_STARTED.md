@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/lish.svg" alt="lish" width="80">
+  <img src="assets/lish.svg" alt="LiSh" width="80">
 </p>
 
 # Getting Started
 
-This walks through everything needed to wire lish into your own sketch: the
+This walks through everything needed to wire LiSh into your own sketch: the
 I/O adapter, writing a command, the command array, and the context object.
 Every code sample here is drawn from the real, compiling
 [`examples/BasicShell`](../examples/BasicShell) - see that folder for a
@@ -13,7 +13,7 @@ and a custom prompt.
 
 ## 1. The I/O Adapter
 
-lish talks to the outside world through an I/O adapter: any type with two
+LiSh talks to the outside world through an I/O adapter: any type with two
 methods.
 
 ```cpp
@@ -233,4 +233,4 @@ login prompt), but `service()` never blocks waiting for the *next* line.
   [Terminal Requirements](../README.md#terminal-requirements) in the
   README for why and what to use instead.
 - See the [Architecture](ARCHITECTURE.md) primer if you're contributing to
-  lish itself, not just using it.
+  LiSh itself, not just using it.

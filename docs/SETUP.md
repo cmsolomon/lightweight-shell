@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/lish.svg" alt="lish" width="80">
+  <img src="assets/lish.svg" alt="LiSh" width="80">
 </p>
 
 # Development Setup
 
-Building lish itself and running its BDD test suite - for contributors,
+Building LiSh itself and running its BDD test suite - for contributors,
 not for using the library in your own sketch (see
 [Getting Started](GETTING_STARTED.md) for that).
 
@@ -15,7 +15,7 @@ not for using the library in your own sketch (see
 ```
 
 Detects your OS (Ubuntu/Debian, Fedora/RHEL/CentOS, or macOS) and installs
-everything needed to build and test lish: CMake, a C++ compiler, Boost,
+everything needed to build and test LiSh: CMake, a C++ compiler, Boost,
 Google Test, and `nlohmann_json` (all of which `cwt-cucumber`, the BDD
 framework the test suite runs on, needs), plus `arduino-cli` and the board
 cores for every preset this project's `CMakeLists.txt` supports, and adds

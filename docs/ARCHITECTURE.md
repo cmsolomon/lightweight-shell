@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="assets/lish.svg" alt="lish" width="80">
+  <img src="assets/lish.svg" alt="LiSh" width="80">
 </p>
 
 # Architecture
 
 This is an internals primer for contributors - it's not needed to *use*
-lish (see [Getting Started](GETTING_STARTED.md) for that). Everything
+LiSh (see [Getting Started](GETTING_STARTED.md) for that). Everything
 below is drawn directly from the current source in `src/` and the
 `examples/BasicShell` reference implementation, not from design notes -
 where behavior is subtle, the relevant file is named so you can go read it
@@ -13,7 +13,7 @@ yourself.
 
 ## Overview
 
-lish is built as a small set of independent, mostly non-templated or
+LiSh is built as a small set of independent, mostly non-templated or
 lightly-templated pieces, composed together by one class, `Shell`, which is
 the only piece that owns everything and the only one application code
 touches directly (through the `IShell` interface it implements). Two
