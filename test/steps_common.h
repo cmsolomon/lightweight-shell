@@ -55,15 +55,33 @@ static lish::CmdPermission parse_mode(const std::string& perm_str) {
     trimmed.erase(trimmed.find_last_not_of(" ") + 1);
 
     // Base cases
-    if (trimmed == "Mode0") return lish::CmdPermission::Mode0;
-    if (trimmed == "Mode1") return lish::CmdPermission::Mode1;
-    if (trimmed == "Mode2") return lish::CmdPermission::Mode2;
-    if (trimmed == "Mode3") return lish::CmdPermission::Mode3;
-    if (trimmed == "Mode4") return lish::CmdPermission::Mode4;
-    if (trimmed == "Mode5") return lish::CmdPermission::Mode5;
-    if (trimmed == "Mode6") return lish::CmdPermission::Mode6;
-    if (trimmed == "AllModes") return lish::CmdPermission::AllModes;
-    if (trimmed == "None") return lish::CmdPermission::None;
+    if (trimmed == "Mode0") {
+        return lish::CmdPermission::Mode0;
+    }
+    if (trimmed == "Mode1") {
+        return lish::CmdPermission::Mode1;
+    }
+    if (trimmed == "Mode2") {
+        return lish::CmdPermission::Mode2;
+    }
+    if (trimmed == "Mode3") {
+        return lish::CmdPermission::Mode3;
+    }
+    if (trimmed == "Mode4") {
+        return lish::CmdPermission::Mode4;
+    }
+    if (trimmed == "Mode5") {
+        return lish::CmdPermission::Mode5;
+    }
+    if (trimmed == "Mode6") {
+        return lish::CmdPermission::Mode6;
+    }
+    if (trimmed == "AllModes") {
+        return lish::CmdPermission::AllModes;
+    }
+    if (trimmed == "None") {
+        return lish::CmdPermission::None;
+    }
 
     // Handle parentheses: (Mode0,Mode1) -> parse inner
     if (trimmed[0] == '(' && trimmed[trimmed.length() - 1] == ')') {
@@ -97,7 +115,9 @@ static lish::CmdPermission parse_mode(const std::string& perm_str) {
         size_t start = 0;
         while (start < trimmed.length()) {
             size_t end = trimmed.find(",", start);
-            if (end == std::string::npos) end = trimmed.length();
+            if (end == std::string::npos) {
+                end = trimmed.length();
+            }
 
             std::string mode = trimmed.substr(start, end - start);
             mode.erase(0, mode.find_first_not_of(" "));
@@ -166,7 +186,7 @@ struct ScenarioContext {
 struct SimpleIOAdapter {
     std::string output;
 
-    void write(char c) {
+    void write(const char c) {
         output += c;
     }
 };

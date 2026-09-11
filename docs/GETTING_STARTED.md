@@ -19,11 +19,11 @@ methods.
 ```cpp
 class SerialIOAdapter {
 public:
-  void write(char c) {
+  void write(const char c) {
     Serial.write(c);
   }
 
-  bool read(char& c, uint16_t timeout_ms = 0) {
+  bool read(char& c, const uint16_t timeout_ms = 0) {
     unsigned long start = millis();
     bool infinite = (timeout_ms == 0xFFFF);
     while (true) {

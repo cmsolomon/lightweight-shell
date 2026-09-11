@@ -41,7 +41,9 @@ GIVEN(given_command_string, "I have a command string {string}") {
     auto& ctx = cuke::context<ArgsContext>();
     std::string cmd = CUKE_ARG(1);
     size_t len = cmd.length();
-    if (len >= ArgsContext::MaxLineLength) len = ArgsContext::MaxLineLength - 1;
+    if (len >= ArgsContext::MaxLineLength) {
+        len = ArgsContext::MaxLineLength - 1;
+    }
     for (size_t i = 0; i < len; ++i) {
         ctx.line_buffer_[i] = cmd[i];
     }
