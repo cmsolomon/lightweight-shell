@@ -148,6 +148,27 @@ endif()
 # updates) - except for custom, which has no DEFAULT_BOARD of its own: forcing it here would
 # discard the -DARDUINO_BOARD_ID the user is required to pass for this preset.
 if(ARDUINO_BOARD_PRESET STREQUAL "custom")
+  # Guard against a stale ARDUINO_BOARD_ID surviving a switch INTO custom from a different
+  # preset: that preset's own configure already FORCE-set ARDUINO_BOARD_ID to its own
+  # DEFAULT_BOARD (e.g. "arduino:avr:uno") in the same build directory, so simply checking
+  # "is it defined and non-empty" (below) would silently pass and reuse that leftover value
+  # instead of erroring, if the user forgets to pass -DARDUINO_BOARD_ID this time.
+  #
+  # _ARDUINO_LAST_BOARD_PRESET/_ARDUINO_BOARD_ID_LAST_CACHED (INTERNAL, updated at the end of
+  # every configure below) snapshot what preset was active, and what ARDUINO_BOARD_ID held,
+  # as of the end of the *previous* configure of this build directory. Only on a transition
+  # INTO custom (last preset != custom) do we compare the current value against that
+  # snapshot: an unchanged value on such a transition means the user didn't pass a fresh
+  # -DARDUINO_BOARD_ID this run - it's just custom inheriting the previous preset's leftover
+  # cache entry - so reject it. Once already in custom, an unchanged value across a plain
+  # `cmake ..` re-run (no transition) is expected and must keep working.
+  if(DEFINED _ARDUINO_LAST_BOARD_PRESET AND NOT _ARDUINO_LAST_BOARD_PRESET STREQUAL "custom"
+     AND DEFINED _ARDUINO_BOARD_ID_LAST_CACHED AND DEFINED ARDUINO_BOARD_ID
+     AND ARDUINO_BOARD_ID STREQUAL "${_ARDUINO_BOARD_ID_LAST_CACHED}")
+    message(FATAL_ERROR "ARDUINO_BOARD_PRESET=custom requires -DARDUINO_BOARD_ID=arduino:arch:board - "
+      "the cached ARDUINO_BOARD_ID (${ARDUINO_BOARD_ID}) is left over from this build directory's "
+      "previous ARDUINO_BOARD_PRESET=${_ARDUINO_LAST_BOARD_PRESET}, not one you provided for custom.")
+  endif()
   if(NOT DEFINED ARDUINO_BOARD_ID OR ARDUINO_BOARD_ID STREQUAL "")
     message(FATAL_ERROR "ARDUINO_BOARD_PRESET=custom requires -DARDUINO_BOARD_ID=arduino:arch:board")
   endif()
@@ -156,6 +177,9 @@ if(ARDUINO_BOARD_PRESET STREQUAL "custom")
 else()
   set(ARDUINO_BOARD_ID "${DEFAULT_BOARD}" CACHE STRING "Arduino board ID (e.g., arduino:avr:uno)" FORCE)
 endif()
+# Snapshot this configure's outcome for the stale-value guard above, next time.
+set(_ARDUINO_LAST_BOARD_PRESET "${ARDUINO_BOARD_PRESET}" CACHE INTERNAL "Internal bookkeeping - do not set manually")
+set(_ARDUINO_BOARD_ID_LAST_CACHED "${ARDUINO_BOARD_ID}" CACHE INTERNAL "Internal bookkeeping - do not set manually")
 set(ARDUINO_LIBS_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "Arduino libraries directory (contains lish/src/lish.h)")
 set(ARDUINO_EXAMPLE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/examples/BasicShell")
 

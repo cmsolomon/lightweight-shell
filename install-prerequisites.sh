@@ -299,8 +299,19 @@ else
     export PATH="$ARDUINO_BIN_DIR:$PATH"
 fi
 
+# esp32:esp32 (Espressif's own core, needed for xiao_esp32c5 - see below) is
+# a third-party package, not part of arduino-cli's default/curated index -
+# it needs its own Boards Manager URL added first, or `core install
+# esp32:esp32` can't resolve the package at all. `config add` is idempotent
+# (a repeat add of the same URL doesn't duplicate the list entry), so this
+# is safe to run on every invocation of this script.
+echo "Adding Espressif's ESP32 Boards Manager URL..."
+arduino-cli config add board_manager.additional_urls \
+    https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+
 # Refresh arduino-cli's package index before installing any core - required on
-# a first run (there is no index to install from yet).
+# a first run (there is no index to install from yet), and again here since
+# the URL above just added a new source to fetch.
 echo "Updating arduino-cli package index..."
 arduino-cli core update-index
 
@@ -386,6 +397,15 @@ fi
 #   (LIBUSB_ERROR_ACCESS)" even with correct dialout membership, which looks
 #   identical to a permissions problem the group-membership fix above should
 #   have already solved.
+# Both rules grant dialout group access only (0660/GROUP="dialout"), not
+# world access (0666 would let any local user/process on the machine open
+# or reprogram an attached Arduino board, not just this user) - matching
+# the same group the dialout-membership fix above already relies on. The
+# DFU rule matches by USB vendor ID only, not the specific DFU product
+# ID(s), so it stays generic across whichever Arduino board actually needs
+# it (different boards' DFU bootloaders can use different product IDs) -
+# narrowing it further to just the Nano ESP32's PID would fix this one
+# board at the cost of breaking it again for the next one.
 # Skipped by default (not just by OS) since it writes to /etc/udev/rules.d
 # and reloads the system udev daemon - system-wide, root-owned config that
 # outlives this script and this user, so it's opt-in only.
@@ -397,11 +417,11 @@ if [ "$OS" = "linux" ] && [ "$INSTALL_UDEV_RULES" = "1" ]; then
     DFU_RULES_FILE="/etc/udev/rules.d/99-arduino-dfu.rules"
 
     echo "Writing $SERIAL_RULES_FILE..."
-    echo 'SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", MODE="0666", GROUP="dialout"' | \
+    echo 'SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", MODE="0660", GROUP="dialout"' | \
         sudo tee "$SERIAL_RULES_FILE" > /dev/null
 
     echo "Writing $DFU_RULES_FILE..."
-    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2341", MODE="0666"' | \
+    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2341", MODE="0660", GROUP="dialout"' | \
         sudo tee "$DFU_RULES_FILE" > /dev/null
 
     echo "Reloading udev rules..."
