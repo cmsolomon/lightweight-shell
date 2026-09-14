@@ -24,7 +24,7 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-lint/main/etc/install.sh | BINDIR="$HOME/.local/bin" sh
 
       - name: Lint
-        run: "$HOME/.local/bin/arduino-lint --compliance strict --library-manager submit"
+        run: "$HOME/.local/bin/arduino-lint --compliance strict --library-manager update"
 
   test:
     runs-on: ubuntu-latest
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        preset: [uno, uno_r4, uno_r4_minima, mega]
+        preset: [uno, uno_r4, uno_r4_minima, mega, nano_esp32, xiao_esp32c5]
     steps:
       - uses: actions/checkout@v5
 
