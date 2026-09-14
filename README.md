@@ -67,9 +67,25 @@ USB CDC, Bluetooth SPP, a TCP socket, or even an in-memory buffer for tests.
 - **Not Arduino-specific**: the shell core depends on nothing from the
   Arduino framework. Anything providing an I/O adapter
   (`write(char)` / `read(char&, uint16_t timeout_ms = 0)`) can host it
-- Verified boards (via this repo's own build):
-  Arduino Uno, Arduino Mega 2560 (AVR / 8-bit),
-  Arduino Uno R4 & Uno R4 Minima (Renesas/ARM)
+- Verified boards - every board below compiles via this repo's own CI
+  (`arduino-cli`, one `ARDUINO_BOARD_PRESET` per row); the ones marked
+  *flashed* were also uploaded to real hardware and driven interactively
+  over serial (`help`, `uptime`, permission-gated commands) in this
+  project's own development, with Flash placement of command
+  names/help/descriptors confirmed against the linker map:
+
+  | Board | Core (FQBN) | Architecture | Verified |
+  |---|---|---|---|
+  | Arduino Uno | `arduino:avr:uno` | AVR (8-bit) | Flashed & tested |
+  | Arduino Mega 2560 | `arduino:avr:mega` | AVR (8-bit) | Compiles (CI) |
+  | Arduino Uno R4 WiFi | `arduino:renesas_uno:unor4wifi` | ARM/Renesas | Flashed & tested |
+  | Arduino Uno R4 Minima | `arduino:renesas_uno:minima` | ARM/Renesas | Compiles (CI) |
+  | Arduino Nano ESP32 | `arduino:esp32:nano_nora` | Xtensa/ESP32-S3 | Flashed & tested |
+  | Seeed Studio XIAO ESP32C5 | `esp32:esp32:XIAO_ESP32C5` | RISC-V/ESP32-C5 | Flashed & tested |
+
+  Any other board is usable via `ARDUINO_BOARD_PRESET=custom` (see
+  [`docs/SETUP.md`](docs/SETUP.md#switching-boards)) - it just isn't
+  compile-checked by this repo's own CI.
 - Two Flash-storage strategies, selected automatically: AVR's
   Harvard-architecture PROGMEM (`avr/pgmspace.h`), or a plain-pointer path
   for unified-address-space targets (ARM and similar) - override either via

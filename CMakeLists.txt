@@ -79,7 +79,7 @@ message(STATUS "Found arduino-cli: ${ARDUINO_CLI_EXECUTABLE}")
 
 # Define supported board types
 set(ARDUINO_BOARD_PRESET "uno" CACHE STRING "Arduino board preset")
-set_property(CACHE ARDUINO_BOARD_PRESET PROPERTY STRINGS "uno" "uno_r4" "uno_r4_minima" "mega" "custom")
+set_property(CACHE ARDUINO_BOARD_PRESET PROPERTY STRINGS "uno" "uno_r4" "uno_r4_minima" "mega" "nano_esp32" "xiao_esp32c5" "custom")
 
 # Board type mapping (includes default serial ports for common cases)
 if(ARDUINO_BOARD_PRESET STREQUAL "uno")
@@ -102,6 +102,19 @@ elseif(ARDUINO_BOARD_PRESET STREQUAL "mega")
   set(BOARD_DESCRIPTION "Arduino Mega 2560 (AVR)")
   set(REQUIRED_CORE "arduino:avr")
   set(DEFAULT_PORT "/dev/ttyUSB0")
+elseif(ARDUINO_BOARD_PRESET STREQUAL "nano_esp32")
+  set(DEFAULT_BOARD "arduino:esp32:nano_nora")
+  set(BOARD_DESCRIPTION "Arduino Nano ESP32 (Xtensa/ESP32-S3)")
+  set(REQUIRED_CORE "arduino:esp32")
+  set(DEFAULT_PORT "/dev/ttyACM0")
+elseif(ARDUINO_BOARD_PRESET STREQUAL "xiao_esp32c5")
+  # esp32:esp32 (Espressif's own core), not arduino:esp32 (Arduino's own
+  # core, above) - arduino:esp32 is still on ESP-IDF 2.0.18 and doesn't
+  # support the C5 chip; esp32:esp32 3.x does.
+  set(DEFAULT_BOARD "esp32:esp32:XIAO_ESP32C5")
+  set(BOARD_DESCRIPTION "Seeed Studio XIAO ESP32C5 (RISC-V)")
+  set(REQUIRED_CORE "esp32:esp32")
+  set(DEFAULT_PORT "/dev/ttyACM0")
 elseif(ARDUINO_BOARD_PRESET STREQUAL "custom")
   set(DEFAULT_BOARD "")
   set(BOARD_DESCRIPTION "Custom (must specify ARDUINO_BOARD_ID)")
@@ -116,8 +129,14 @@ set(DETECTED_PORT "${DEFAULT_PORT}")
 message(STATUS "Arduino: Using board-specific default port ${DETECTED_PORT}")
 
 # Allow override via -DARDUINO_PORT=/dev/ttyACM0 or similar
-# Only update port if user didn't explicitly specify it (check if it differs from preset default)
-if(NOT DEFINED ARDUINO_PORT OR ARDUINO_PORT STREQUAL "/dev/ttyUSB0" OR ARDUINO_PORT STREQUAL "/dev/ttyACM0")
+# Only update port if user didn't explicitly specify it (check if it differs from preset default).
+# custom is exempt from that heuristic: it has no board-specific DETECTED_PORT to fall back to
+# (DEFAULT_PORT is just a placeholder for it), and an arbitrary custom board's real port can
+# legitimately equal one of the hardcoded /dev/ttyUSB0 / /dev/ttyACM0 literals below - forcing
+# it back to the placeholder in that case would silently discard a correct user-supplied port.
+if(ARDUINO_BOARD_PRESET STREQUAL "custom" AND DEFINED ARDUINO_PORT AND NOT ARDUINO_PORT STREQUAL "")
+  set(ARDUINO_PORT "${ARDUINO_PORT}" CACHE STRING "Arduino serial port")
+elseif(NOT DEFINED ARDUINO_PORT OR ARDUINO_PORT STREQUAL "/dev/ttyUSB0" OR ARDUINO_PORT STREQUAL "/dev/ttyACM0")
   # User didn't specify a custom port, use board default
   set(ARDUINO_PORT "${DETECTED_PORT}" CACHE STRING "Arduino serial port" FORCE)
 else()
@@ -125,8 +144,18 @@ else()
   set(ARDUINO_PORT "${ARDUINO_PORT}" CACHE STRING "Arduino serial port")
 endif()
 
-# Force update ARDUINO_BOARD_ID based on current preset (FORCE prevents cache from blocking updates)
-set(ARDUINO_BOARD_ID "${DEFAULT_BOARD}" CACHE STRING "Arduino board ID (e.g., arduino:avr:uno)" FORCE)
+# Force update ARDUINO_BOARD_ID based on current preset (FORCE prevents cache from blocking
+# updates) - except for custom, which has no DEFAULT_BOARD of its own: forcing it here would
+# discard the -DARDUINO_BOARD_ID the user is required to pass for this preset.
+if(ARDUINO_BOARD_PRESET STREQUAL "custom")
+  if(NOT DEFINED ARDUINO_BOARD_ID OR ARDUINO_BOARD_ID STREQUAL "")
+    message(FATAL_ERROR "ARDUINO_BOARD_PRESET=custom requires -DARDUINO_BOARD_ID=arduino:arch:board")
+  endif()
+  set(ARDUINO_BOARD_ID "${ARDUINO_BOARD_ID}" CACHE STRING "Arduino board ID (e.g., arduino:avr:uno)")
+  set(BOARD_DESCRIPTION "Custom (${ARDUINO_BOARD_ID})")
+else()
+  set(ARDUINO_BOARD_ID "${DEFAULT_BOARD}" CACHE STRING "Arduino board ID (e.g., arduino:avr:uno)" FORCE)
+endif()
 set(ARDUINO_LIBS_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "Arduino libraries directory (contains lish/src/lish.h)")
 set(ARDUINO_EXAMPLE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/examples/BasicShell")
 
@@ -176,6 +205,8 @@ message(STATUS "  cmake .. -DARDUINO_BOARD_PRESET=uno")
 message(STATUS "  cmake .. -DARDUINO_BOARD_PRESET=uno_r4          # WiFi variant")
 message(STATUS "  cmake .. -DARDUINO_BOARD_PRESET=uno_r4_minima   # Minima variant")
 message(STATUS "  cmake .. -DARDUINO_BOARD_PRESET=mega")
+message(STATUS "  cmake .. -DARDUINO_BOARD_PRESET=nano_esp32      # Xtensa/ESP32-S3")
+message(STATUS "  cmake .. -DARDUINO_BOARD_PRESET=xiao_esp32c5    # RISC-V/ESP32-C5")
 message(STATUS "")
 message(STATUS "Advanced options:")
 message(STATUS "  cmake .. -DARDUINO_BOARD_PRESET=custom -DARDUINO_BOARD_ID=arduino:arch:board")

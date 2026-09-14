@@ -7,21 +7,42 @@
 #   Test, nlohmann_json (cwt-cucumber's own dependencies)
 # - The Arduino toolchain: arduino-cli itself, plus the board cores for every
 #   preset CMakeLists.txt currently supports (arduino:avr for uno/mega,
-#   arduino:renesas_uno for uno_r4/uno_r4_minima) - required for `make
-#   arduino_build`/`make arduino_run`, which fail at CMake-configure time
-#   (arduino-cli missing) or build time (a core missing) without these
+#   arduino:renesas_uno for uno_r4/uno_r4_minima, arduino:esp32 for
+#   nano_esp32, esp32:esp32 - Espressif's own core, not Arduino's - for
+#   xiao_esp32c5) - required for `make arduino_build`/`make arduino_run`,
+#   which fail at CMake-configure time (arduino-cli missing) or build time (a
+#   core missing) without these
+# - pyserial (Linux/macOS): both ESP32 cores' esptool_py tool is a plain
+#   Python script, not a self-contained binary like the other cores' upload
+#   tools - it needs the system python3 plus the `serial` module. Without
+#   it, `arduino_build`/`arduino_run` for nano_esp32/xiao_esp32c5 fail with
+#   "ModuleNotFoundError: No module named 'serial'" from inside arduino-cli's
+#   own bundled esptool.py, which looks like a broken install rather than a
+#   missing Python dependency.
 # - Serial port permissions (the `dialout` group) needed to actually upload to a
 #   board via `make arduino_run` - without this, uploads fail with a permission
 #   error on /dev/ttyUSB0 or /dev/ttyACM0, one of the most common first-time
 #   Arduino stumbling blocks
 #
-# NOTE: New Arduino board presets (e.g. a future ESP32/ESP32-C3 target) should be
-# added to CMakeLists.txt's ARDUINO_BOARD_PRESET options FIRST, then mirrored here
-# (a new REQUIRED_CORE, and - for a third-party core like ESP32's - a
-# `arduino-cli config add board_manager.additional_urls <url>` step) - keep this
-# script's supported-board list in sync with CMakeLists.txt's, not ahead of it.
+# NOTE: New Arduino board presets should be added to CMakeLists.txt's
+# ARDUINO_BOARD_PRESET options FIRST, then mirrored here (a new REQUIRED_CORE,
+# and - for a third-party core - a
+# `arduino-cli config add board_manager.additional_urls <url>` step) - keep
+# this script's supported-board list in sync with CMakeLists.txt's, not ahead
+# of it.
 #
 # Usage: ./install-prerequisites.sh
+#        ./install-prerequisites.sh --install-udev-rules
+#
+# --install-udev-rules (Linux only, opt-in - modifies system udev config, and
+#   is skipped by default): installs /etc/udev/rules.d rules granting
+#   permission to (a) open Arduino boards' serial ports directly by vendor ID
+#   (redundant with dialout group membership on most distros, but explicit
+#   here for robustness) and (b) the raw USB DFU device node some boards
+#   (e.g. Nano ESP32) briefly re-enumerate as mid-upload - (b) is NOT covered
+#   by dialout group membership at all, since it's not a tty device; without
+#   it, `arduino_run` on such a board fails with
+#   "dfu-util: Cannot open DFU device ... (LIBUSB_ERROR_ACCESS)".
 #
 # Supported platforms:
 # - Ubuntu/Debian (apt)
@@ -29,6 +50,20 @@
 # - macOS (Homebrew)
 
 set -e
+
+INSTALL_UDEV_RULES=0
+for arg in "$@"; do
+    case "$arg" in
+        --install-udev-rules)
+            INSTALL_UDEV_RULES=1
+            ;;
+        *)
+            echo "Unknown argument: $arg" >&2
+            echo "Usage: $0 [--install-udev-rules]" >&2
+            exit 1
+            ;;
+    esac
+done
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -271,8 +306,11 @@ arduino-cli core update-index
 
 # Install the board core for every preset CMakeLists.txt currently supports.
 # arduino:avr covers "uno"/"mega"; arduino:renesas_uno covers "uno_r4"/
-# "uno_r4_minima" - see CMakeLists.txt's ARDUINO_BOARD_PRESET options.
-for core in "arduino:avr" "arduino:renesas_uno"; do
+# "uno_r4_minima"; arduino:esp32 covers "nano_esp32"; esp32:esp32 (a
+# different, Espressif-maintained core - arduino:esp32 doesn't yet support
+# the C5 chip) covers "xiao_esp32c5" - see CMakeLists.txt's
+# ARDUINO_BOARD_PRESET options.
+for core in "arduino:avr" "arduino:renesas_uno" "arduino:esp32" "esp32:esp32"; do
     if arduino-cli core list | grep -q "^${core} "; then
         echo -e "${GREEN}✓ $core core already installed${NC}"
     else
@@ -280,6 +318,30 @@ for core in "arduino:avr" "arduino:renesas_uno"; do
         arduino-cli core install "$core"
     fi
 done
+
+# ============================================================================
+# pyserial (Linux/macOS - required to upload/program an ESP32 board)
+# ============================================================================
+# Both arduino:esp32's and esp32:esp32's esptool_py tool are plain Python
+# scripts relying on the system python3 plus the `serial` module (pyserial)
+# - unlike the other cores' upload tools, they aren't self-contained
+# binaries, so a missing pyserial doesn't surface until `arduino_run`
+# actually tries to upload to a nano_esp32/xiao_esp32c5 board, as a
+# ModuleNotFoundError from inside arduino-cli's own bundled esptool.py.
+echo ""
+echo -e "${YELLOW}Checking Python pyserial (required by the ESP32 cores' esptool)...${NC}"
+if python3 -c "import serial" &> /dev/null; then
+    echo -e "${GREEN}✓ pyserial already installed${NC}"
+else
+    echo "Installing pyserial..."
+    if [ "$PKG_MANAGER" = "apt" ]; then
+        sudo apt-get install -y python3-serial
+    elif [ "$PKG_MANAGER" = "yum" ]; then
+        $SUDO_PKG install -y python3-pyserial
+    elif [ "$PKG_MANAGER" = "brew" ]; then
+        python3 -m pip install --user pyserial
+    fi
+fi
 
 # ============================================================================
 # Serial Port Permissions (Linux only - required to upload/program a board)
@@ -306,6 +368,48 @@ if [ "$OS" = "linux" ]; then
         echo "  Log out and back in (or run 'newgrp dialout' in this shell) before"
         echo "  attempting to upload to a board with 'make arduino_run'."
     fi
+fi
+
+# ============================================================================
+# udev Rules (Linux only, opt-in via --install-udev-rules)
+# ============================================================================
+# Two separate problems, only one of which dialout group membership above
+# actually fixes:
+# - Serial (tty) access: normally already covered by dialout group
+#   membership - this rule is redundant on most distros, included only for
+#   robustness on minimal setups that don't grant dialout rw on tty nodes by
+#   default.
+# - Raw USB DFU access: some boards (e.g. Nano ESP32) briefly re-enumerate
+#   as a raw USB DFU device mid-upload, NOT a tty - dialout group membership
+#   doesn't apply to that device node at all. Without this rule, uploading
+#   to such a board fails with "dfu-util: Cannot open DFU device ...
+#   (LIBUSB_ERROR_ACCESS)" even with correct dialout membership, which looks
+#   identical to a permissions problem the group-membership fix above should
+#   have already solved.
+# Skipped by default (not just by OS) since it writes to /etc/udev/rules.d
+# and reloads the system udev daemon - system-wide, root-owned config that
+# outlives this script and this user, so it's opt-in only.
+if [ "$OS" = "linux" ] && [ "$INSTALL_UDEV_RULES" = "1" ]; then
+    echo ""
+    echo -e "${YELLOW}Installing udev rules for Arduino serial + DFU access...${NC}"
+
+    SERIAL_RULES_FILE="/etc/udev/rules.d/99-arduino-serial.rules"
+    DFU_RULES_FILE="/etc/udev/rules.d/99-arduino-dfu.rules"
+
+    echo "Writing $SERIAL_RULES_FILE..."
+    echo 'SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", MODE="0666", GROUP="dialout"' | \
+        sudo tee "$SERIAL_RULES_FILE" > /dev/null
+
+    echo "Writing $DFU_RULES_FILE..."
+    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2341", MODE="0666"' | \
+        sudo tee "$DFU_RULES_FILE" > /dev/null
+
+    echo "Reloading udev rules..."
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger
+
+    echo -e "${GREEN}✓ udev rules installed${NC}"
+    echo -e "${YELLOW}⚠ Unplug and replug the board for the new rules to apply to it.${NC}"
 fi
 
 # ============================================================================
@@ -364,7 +468,7 @@ fi
 # Check arduino-cli and its board cores
 if command_exists arduino-cli; then
     echo -e "${GREEN}✓ arduino-cli${NC}: $(arduino-cli version | head -1)"
-    for core in "arduino:avr" "arduino:renesas_uno"; do
+    for core in "arduino:avr" "arduino:renesas_uno" "arduino:esp32" "esp32:esp32"; do
         if arduino-cli core list | grep -q "^${core} "; then
             echo -e "${GREEN}✓ $core core${NC} installed"
         else
@@ -382,6 +486,14 @@ if command_exists arduino-lint; then
     echo -e "${GREEN}✓ arduino-lint${NC}: $(arduino-lint --version)"
 else
     echo -e "${RED}✗ arduino-lint not found${NC}"
+    missing=$((missing + 1))
+fi
+
+# Check pyserial (required by the ESP32 cores' esptool)
+if python3 -c "import serial" &> /dev/null; then
+    echo -e "${GREEN}✓ pyserial${NC} installed"
+else
+    echo -e "${RED}✗ pyserial not found${NC} (nano_esp32/xiao_esp32c5 uploads will fail until this is fixed)"
     missing=$((missing + 1))
 fi
 
@@ -414,6 +526,11 @@ if [ $missing -eq 0 ]; then
     echo ""
     echo "  If you were just added to the dialout group, log out and back in"
     echo "  (or run 'newgrp dialout') before step 5."
+    echo ""
+    echo "  Uploading to a board that fails with a USB/DFU permission error (e.g."
+    echo "  'Cannot open DFU device ... LIBUSB_ERROR_ACCESS' on Nano ESP32), even"
+    echo "  with dialout group membership already fixed above:"
+    echo "    ./install-prerequisites.sh --install-udev-rules"
     exit 0
 else
     echo -e "${RED}✗ $missing prerequisite(s) missing${NC}"

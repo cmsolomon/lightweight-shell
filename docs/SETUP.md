@@ -132,11 +132,20 @@ cmake --build build --target arduino_run
 ```bash
 cmake -S . -B build -DARDUINO_BOARD_PRESET=uno_r4        # Uno R4 WiFi
 cmake -S . -B build -DARDUINO_BOARD_PRESET=uno_r4_minima # Uno R4 Minima
-cmake -S . -B build -DARDUINO_BOARD_PRESET=mega           # Mega 2560
+cmake -S . -B build -DARDUINO_BOARD_PRESET=mega          # Mega 2560
+cmake -S . -B build -DARDUINO_BOARD_PRESET=nano_esp32    # Nano ESP32 (Xtensa/ESP32-S3)
+cmake -S . -B build -DARDUINO_BOARD_PRESET=xiao_esp32c5  # Seeed XIAO ESP32C5 (RISC-V)
 ```
 
+`nano_esp32` and `xiao_esp32c5` use two different, unrelated ESP32 cores -
+`arduino:esp32` (Arduino's own) and `esp32:esp32` (Espressif's own)
+respectively - because `arduino:esp32` doesn't yet support the C5 chip.
+`./install-prerequisites.sh` installs both, plus `pyserial` (required by
+both cores' `esptool.py`, which - unlike the AVR/Renesas cores' upload
+tools - is a plain Python script rather than a self-contained binary).
+
 Each preset has its own default serial port (`/dev/ttyUSB0` for AVR boards,
-`/dev/ttyACM0` for the R4 boards); override it explicitly if needed:
+`/dev/ttyACM0` for the R4 and ESP32 boards); override it explicitly if needed:
 
 ```bash
 cmake -S . -B build -DARDUINO_PORT=/dev/ttyACM1
@@ -250,3 +259,12 @@ pkill lish_tests
 You need to be in the `dialout` group (Linux); `install-prerequisites.sh`
 adds you to it, but group membership only takes effect on your *next*
 login - log out and back in, or run `newgrp dialout` in your current shell.
+
+### Upload fails with "Cannot open DFU device ... LIBUSB_ERROR_ACCESS"
+
+Some boards (e.g. Nano ESP32) briefly re-enumerate as a raw USB DFU device
+mid-upload, which is *not* a tty - `dialout` group membership above doesn't
+cover it, so this can happen even with serial permissions already correct.
+Run `./install-prerequisites.sh --install-udev-rules` (installs a udev rule
+granting access by USB vendor ID, then reloads udev) and unplug/replug the
+board.

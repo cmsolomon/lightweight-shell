@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        preset: [uno, uno_r4, uno_r4_minima, mega]
+        preset: [uno, uno_r4, uno_r4_minima, mega, nano_esp32, xiao_esp32c5]
     steps:
       - uses: actions/checkout@v5
 
